@@ -4,19 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>TeamRit · WFHC JO14-1</title>
-  <meta property="og:title" content="TeamRit · WFHC JO14-1">
-  <meta property="og:description" content="Geef aanwezigheid en vervoer door voor de wedstrijd. Geen app nodig, gewoon via de link.">
-  <meta property="og:image" content="https://teamrit4.netlify.app/og-preview.jpg">
-  <meta property="og:url" content="https://teamrit4.netlify.app/">
-  <meta property="og:type" content="website">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="TeamRit · WFHC JO14-1">
-  <meta name="twitter:description" content="Geef aanwezigheid en vervoer door voor de wedstrijd. Geen app nodig, gewoon via de link.">
-  <meta name="twitter:image" content="https://teamrit4.netlify.app/og-preview.jpg">
+<meta property="og:title" content="TeamRit · WFHC JO14-1">
+<meta property="og:description" content="Geef aanwezigheid en vervoer door voor de wedstrijd. Geen app nodig, gewoon via de link.">
+<meta property="og:image" content="https://teamrit4.netlify.app/og-preview.jpg">
+<meta property="og:url" content="https://teamrit4.netlify.app/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="TeamRit · WFHC JO14-1">
+<meta name="twitter:description" content="Geef aanwezigheid en vervoer door voor de wedstrijd. Geen app nodig, gewoon via de link.">
+<meta name="twitter:image" content="https://teamrit4.netlify.app/og-preview.jpg">
 <style>
 :root{
-  --navy:#0f2f3d; --green:#13806a; --green2:#e7f4ef; --yellow:#f2c84b;
-  --ink:#173029; --muted:#74827c; --line:#dfe8e4; --bg:#f4f8f6; --white:#fff;
+--navy:#0f2f3d; --green:#13806a; --green2:#e7f4ef; --yellow:#f2c84b;
+--ink:#173029; --muted:#74827c; --line:#dfe8e4; --bg:#f4f8f6; --white:#fff;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -77,80 +77,99 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 .yes{background:#e5f4ed;color:var(--green)} .no{background:#f8e8e8;color:#a43e3e} .empty{background:#eef1ef;color:#7d8782}
 .note{font-size:12px;color:var(--muted);background:#f0f4f2;border-radius:12px;padding:10px;margin-top:10px}
 .footer{text-align:center;color:var(--muted);font-size:13px;margin-top:10px}
+.matchList{display:grid;gap:12px}
+.matchCard{background:rgba(255,255,255,.97);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:0 8px 20px rgba(24,63,50,.06)}
+.matchTop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.matchDate{font-size:12px;font-weight:900;color:var(--green);text-transform:uppercase;letter-spacing:.4px}
+.matchTeams{font-size:17px;font-weight:800;margin:6px 0 2px}
+.matchMeta{color:var(--muted);font-size:13px}
+.statusPill{padding:6px 12px;border-radius:999px;font-size:12px;font-weight:900;white-space:nowrap}
+.statusOpen{background:#eef1ef;color:#7d8782}
+.statusActive{background:var(--green2);color:var(--green)}
+.organizeBtn{width:100%;margin-top:14px;border:0;border-radius:14px;padding:13px;font-weight:900;font-size:15px;cursor:pointer;background:var(--green);color:#fff}
+.kiesGrid{display:grid;gap:12px;margin-top:4px}
+.kiesCard{text-align:left;border:1px solid var(--line);background:#fff;border-radius:18px;padding:18px;cursor:pointer;display:flex;gap:14px;align-items:center;width:100%}
+.kiesCard:active{background:var(--green2)}
+.kiesIcon{font-size:26px}
+.kiesCard strong{display:block;font-size:16px}
+.kiesCard span span{color:var(--muted);font-size:13px}
 @media(max-width:700px){
-  .app{padding:14px} .pill{display:none} .heroTop{display:block} .hero h2{font-size:35px}
-  .location{margin-top:14px} .details{grid-template-columns:1fr 1fr} .homeActions{grid-template-columns:1fr}
-  .stats{grid-template-columns:1fr 1fr} table{font-size:12px} th,td{padding:9px 5px}
+.app{padding:14px} .pill{display:none} .heroTop{display:block} .hero h2{font-size:35px}
+.location{margin-top:14px} .details{grid-template-columns:1fr 1fr} .homeActions{grid-template-columns:1fr}
+.stats{grid-template-columns:1fr 1fr} table{font-size:12px} th,td{padding:9px 5px}
 }
 </style>
 </head>
 <body>
 <div class="app">
 <div class="top">
-  <div class="brand"><div class="logo">TR</div><div><h1>TeamRit</h1><small>WFHC JO14-1</small></div></div>
-  <div class="pill">PILOT 1 VAN 3</div>
+<div class="brand"><div class="logo">TR</div><div><h1>TeamRit</h1><small>WFHC JO14-1</small></div></div>
+<div class="pill">PILOT 1 VAN 3</div>
 </div>
 
 <section id="home" class="screen active">
-  <div class="card hero">
-    <div class="heroTop">
-      <div><div class="eyebrow">Vrijdag 21 augustus</div><h2>Uit naar FIT</h2><div style="color:var(--muted);font-size:18px">WFHC JO14-1 · AMHC FIT JO14-2</div></div>
-      <a class="location" target="_blank" href="https://www.google.com/maps/search/?api=1&query=Vikingpad+41+Amsterdam">📍 Kadoelen</a>
-    </div>
-    <div class="details">
-      <div class="detail"><div class="ico">→</div><div><small>Vertrek</small><strong>18.00 uur</strong></div></div>
-      <div class="detail"><div class="ico">19</div><div><small>Wedstrijd</small><strong>19.30 uur</strong></div></div>
-      <div class="detail"><div class="ico">🚙</div><div><small>Reistijd</small><strong>± 35 minuten</strong></div></div>
-      <div class="detail"><div class="ico">●</div><div><small>Adres</small><strong>Vikingpad 41</strong></div></div>
-    </div>
-  </div>
-  <div class="homeActions">
-    <a class="action" href="#ouder"><div class="actionIcon">👤</div><strong>Ik ben ouder</strong><span>Geef aanwezigheid en vervoer door.</span></a>
-    <a class="action" href="#coach"><div class="actionIcon">📋</div><strong>Teamoverzicht</strong><span>Bekijk alle reacties in één overzicht.</span></a>
-  </div>
-  <div class="footer">Geen app nodig · gewoon via de WhatsApp-link</div>
+<div class="card hero">
+<div class="eyebrow">Mijn wedstrijden</div>
+<h2 style="font-size:28px;margin:12px 0 4px">WFHC JO14-1</h2>
+<div style="color:var(--muted)">Kies een wedstrijd om te organiseren.</div>
+</div>
+<div id="matchList" class="matchList"></div>
+<div class="footer">Geen app nodig · gewoon via de WhatsApp-link</div>
+</section>
+
+<section id="kies" class="screen">
+<button class="back" onclick="go('home')">‹</button>
+<div class="card">
+<div class="eyebrow" id="kiesDate"></div>
+<h3 id="kiesTeams" style="margin:6px 0 18px"></h3>
+<div class="kiesGrid">
+<button class="kiesCard" onclick="startOrganize('Aanwezigheid')"><span class="kiesIcon">✅</span><span><strong>Aanwezigheid</strong><span>Wie is er zaterdag bij?</span></span></button>
+<button class="kiesCard" onclick="startOrganize('Vervoer')"><span class="kiesIcon">🚗</span><span><strong>Vervoer</strong><span>Wie rijdt en wie heeft nog plek?</span></span></button>
+<button class="kiesCard" onclick="startOrganize('Vrijwilligers')"><span class="kiesIcon">🙋</span><span><strong>Vrijwilligers</strong><span>Wie helpt deze wedstrijd?</span></span></button>
+</div>
+</div>
 </section>
 
 <section id="ouder" class="screen">
-  <button class="back" onclick="go('home')">‹</button>
-  <div class="card">
-    <div class="eyebrow">Stap 1</div><h3>Wie ben jij?</h3>
-    <div class="search">🔎 <input id="search" placeholder="Zoek je naam"></div>
-    <div id="list" class="list"></div>
-  </div>
+<button class="back" onclick="go('home')">‹</button>
+<div class="card">
+<div class="eyebrow">Stap 1</div><h3>Wie ben jij?</h3>
+<div class="search">🔎 <input id="search" placeholder="Zoek je naam"></div>
+<div id="list" class="list"></div>
+</div>
 </section>
 
 <section id="form" class="screen">
-  <button class="back" onclick="go('ouder')">‹</button>
-  <div class="card"><div class="eyebrow">Jouw reactie</div><h3 id="hello"></h3><div id="kids" class="chips"></div></div>
-  <div class="card question"><h3 id="presence"></h3><div class="opts"><button class="opt" data-k="present" data-v="Ja">Ja</button><button class="opt" data-k="present" data-v="Nee">Nee</button></div></div>
-  <div class="card question"><h3>Kun je rijden?</h3><div class="opts"><button class="opt" data-k="drive" data-v="Ja">Ja</button><button class="opt" data-k="drive" data-v="Nee">Nee</button></div></div>
-  <div id="seats" class="card question hidden"><h3>Hoeveel teamgenoten kunnen mee?</h3><div class="opts four"><button class="opt" data-k="seats" data-v="1">1</button><button class="opt" data-k="seats" data-v="2">2</button><button class="opt" data-k="seats" data-v="3">3</button><button class="opt" data-k="seats" data-v="4+">4+</button></div></div>
-  <button id="save" class="primary">Doorgeven</button>
+<button class="back" onclick="go('ouder')">‹</button>
+<div class="card"><div class="eyebrow">Jouw reactie</div><h3 id="hello"></h3><div id="kids" class="chips"></div></div>
+<div class="card question"><h3 id="presence"></h3><div class="opts"><button class="opt" data-k="present" data-v="Ja">Ja</button><button class="opt" data-k="present" data-v="Nee">Nee</button></div></div>
+<div class="card question"><h3>Kun je rijden?</h3><div class="opts"><button class="opt" data-k="drive" data-v="Ja">Ja</button><button class="opt" data-k="drive" data-v="Nee">Nee</button></div></div>
+<div id="seats" class="card question hidden"><h3>Hoeveel teamgenoten kunnen mee?</h3><div class="opts four"><button class="opt" data-k="seats" data-v="1">1</button><button class="opt" data-k="seats" data-v="2">2</button><button class="opt" data-k="seats" data-v="3">3</button><button class="opt" data-k="seats" data-v="4+">4+</button></div></div>
+<button id="save" class="primary">Doorgeven</button>
 </section>
 
 <section id="done" class="screen">
-  <div class="card confirm"><div class="check">✅</div><h3>Bedankt!</h3><p>Je reactie is opgeslagen.</p></div>
-  <a class="primary" target="_blank" href="https://www.google.com/maps/search/?api=1&query=Vikingpad+41+Amsterdam">Open routeplanner</a>
-  <button class="secondary" onclick="go('coach')">Bekijk teamoverzicht</button>
-  <button class="secondary" onclick="go('form')">Antwoord aanpassen</button>
-  <button class="secondary" onclick="go('home')">Terug naar start</button>
+<div class="card confirm"><div class="check">✅</div><h3>Bedankt!</h3><p>Je reactie is opgeslagen.</p></div>
+<a class="primary" target="_blank" href="https://www.google.com/maps/search/?api=1&query=Vikingpad+41+Amsterdam">Open routeplanner</a>
+<button class="secondary" onclick="go('coach')">Bekijk teamoverzicht</button>
+<button class="secondary" onclick="go('form')">Antwoord aanpassen</button>
+<button class="secondary" onclick="go('home')">Terug naar start</button>
 </section>
 
 <section id="coach" class="screen">
-  <button class="back" onclick="go('home')">‹</button>
-  <div class="card">
-    <div class="eyebrow">Teamoverzicht</div><h3>Teamoverzicht JO14-1</h3>
-    <div class="stats">
-      <div class="stat"><span>Gereageerd</span><strong id="r">0</strong></div>
-      <div class="stat"><span>Aanwezig</span><strong id="a">0</strong></div>
-      <div class="stat"><span>Rijders</span><strong id="d">0</strong></div>
-    </div>
-  </div>
-  <div class="card" style="overflow:auto">
-    <table><thead><tr><th>Ouder</th><th>Kind</th><th>Aanwezig</th><th>Rijdt</th><th>Plaatsen</th></tr></thead><tbody id="rows"></tbody></table>
-    <div class="note">Iedereen kan dit overzicht bekijken. Reacties worden gedeeld en direct bijgewerkt voor iedereen.</div>
-  </div>
+<button class="back" onclick="go('home')">‹</button>
+<div class="card">
+<div class="eyebrow">Teamoverzicht</div><h3>Teamoverzicht JO14-1</h3>
+<div class="stats">
+<div class="stat"><span>Gereageerd</span><strong id="r">0</strong></div>
+<div class="stat"><span>Aanwezig</span><strong id="a">0</strong></div>
+<div class="stat"><span>Rijders</span><strong id="d">0</strong></div>
+</div>
+</div>
+<div class="card" style="overflow:auto">
+<table><thead><tr><th>Ouder</th><th>Kind</th><th>Aanwezig</th><th>Rijdt</th><th>Plaatsen</th></tr></thead><tbody id="rows"></tbody></table>
+<div class="note">Iedereen kan dit overzicht bekijken. Reacties worden gedeeld en direct bijgewerkt voor iedereen.</div>
+</div>
 </section>
 </div>
 
@@ -167,5 +186,33 @@ function badge(v){if(!v)return'<span class="badge empty">–</span>';return'<spa
 async function coach(){document.getElementById('rows').innerHTML='<tr><td colspan="5">Laden...</td></tr>';let data=[];try{const res=await fetch('/api/overview');data=await res.json()}catch(e){document.getElementById('rows').innerHTML='<tr><td colspan="5">Kon overzicht niet laden.</td></tr>';return}let rr=0,aa=0,dd=0,out='';data.forEach(p=>{if(p.present||p.drive){rr++;if(p.present==='Ja')aa++;if(p.drive==='Ja')dd++}out+='<tr><td><strong>'+p.name+'</strong></td><td>'+p.children.join('<br>')+'</td><td>'+badge(p.present)+'</td><td>'+badge(p.drive)+'</td><td>'+(p.drive==='Ja'?(p.seats||'–'):'–')+'</td></tr>'});document.getElementById('rows').innerHTML=out;document.getElementById('r').textContent=rr;document.getElementById('a').textContent=aa;document.getElementById('d').textContent=dd}
 async function init(){try{const res=await fetch('/api/roster');parents=await res.json()}catch(e){parents=[]}render();if(location.hash){let id=location.hash.slice(1);if(document.getElementById(id))go(id)}}
 init();
+
+const trMatches=[
+{id:'m1',date:'Zaterdag 12 september 2026',teams:'WFHC JO14-1 · Terriërs/Castricum JO14-1',meta:'Thuis · tijd nog niet bekend'},
+{id:'m2',date:'Zaterdag 19 september 2026',teams:'Waterland JO14-1 · WFHC JO14-1',meta:'Uit · tijd nog niet bekend'},
+{id:'m3',date:'Zaterdag 26 september 2026',teams:'Heerhugowaard JO14-1 · WFHC JO14-1',meta:'Uit · tijd nog niet bekend'}
+];
+let trActiveMatch=null;
+function trStatus(id){return localStorage.getItem('tr_status_'+id)||''}
+function trRenderMatches(){
+let box=document.getElementById('matchList');
+box.innerHTML=trMatches.map(m=>{
+let st=trStatus(m.id);
+let pillClass=st?'statusPill statusActive':'statusPill statusOpen';
+let pillText=st||'Nog niets georganiseerd';
+return '<div class="matchCard"><div class="matchTop"><div><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div></div><div class="'+pillClass+'">'+pillText+'</div></div><button class="organizeBtn" onclick="trOpenMatch(\''+m.id+'\')">Organiseren</button></div>'
+}).join('')
+}
+function trOpenMatch(id){
+trActiveMatch=trMatches.find(m=>m.id===id);
+document.getElementById('kiesDate').textContent=trActiveMatch.date;
+document.getElementById('kiesTeams').textContent=trActiveMatch.teams+' — wat wil je organiseren?';
+go('kies')
+}
+function startOrganize(type){
+if(trActiveMatch){localStorage.setItem('tr_status_'+trActiveMatch.id,type+' actief');trRenderMatches()}
+go('ouder')
+}
+trRenderMatches();
 </script>
 </body></html>
