@@ -197,8 +197,7 @@ return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div
 function trResponseHtml(list){
 let missing=list.filter(p=>!p.present);
 if(missing.length===0){return '<div class="dashLine">🟢 Iedereen heeft gereageerd</div>'}
-let names=missing.map(p=>p.name).join(' · ');
-return '<div class="dashLine">🟠 Nog '+missing.length+' reacties</div><div class="dashSub">Nog geen reactie: '+names+'</div>'
+return '<div class="dashLine">🟠 '+missing.length+' mensen moeten nog reageren</div>'
 }
 function trTransportHtml(list){
 let drivers=list.filter(p=>p.drive==='Ja');
@@ -211,7 +210,7 @@ let namesHtml=n>0?'<div class="dashSub">Rijden: '+drivers.map(p=>p.name).join(' 
 return statusHtml+namesHtml
 }
 function trFruitLine(fruitName){
-return '<div class="dashLine">'+(fruitName?'🍎 Fruit · '+fruitName:'🍎 Fruit · nog niet geregeld')+'</div>'
+return '<div class="dashLine">'+(fruitName?'🍎 Fruit · '+fruitName:'🍎 Neem jij fruit mee?')+'</div>'
 }
 function trMapsHtml(){
 return '<a class="mapsBtn" target="_blank" href="https://www.google.com/maps/search/?api=1&query=Vikingpad+41+Amsterdam">'+trMapsIcon+' Google Maps</a>'
@@ -259,7 +258,7 @@ const statusEl=document.getElementById('fruitStatus');
 const subEl=document.getElementById('fruitSub');
 const btn=document.getElementById('fruitBtn');
 if(!fruitState){
-statusEl.textContent='🍎 Fruit · nog niet geregeld';
+statusEl.textContent='🍎 Neem jij fruit mee?';
 subEl.textContent='Eén ouder mag dit meenemen.';
 btn.textContent='🍎 Ik neem fruit mee';
 btn.classList.remove('hidden');
