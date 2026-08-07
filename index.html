@@ -84,12 +84,17 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 .matchTop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .matchInfo{min-width:0}
 .matchDate{font-size:12px;font-weight:900;color:var(--green);text-transform:uppercase;letter-spacing:.4px}
-.matchTeams{font-size:17px;font-weight:800;margin:6px 0 2px}
-.matchMeta{color:var(--muted);font-size:13px}
+.matchTeams{font-size:17px;font-weight:800;margin:6px 0 2px;word-break:break-word}
+.matchMeta{color:var(--muted);font-size:13px;word-break:break-word}
 .statusPill{padding:6px 12px;border-radius:999px;font-size:12px;font-weight:900;white-space:nowrap}
 .statusOpen{background:#eef1ef;color:#7d8782}
 .statusActive{background:var(--green2);color:var(--green)}
 .organizeBtn{width:100%;margin-top:14px;border:0;border-radius:14px;padding:13px;font-weight:900;font-size:15px;cursor:pointer;background:var(--green);color:#fff}
+.dashBlock{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);display:grid;gap:7px}
+.dashLine{font-size:13.5px;font-weight:850;line-height:1.4;word-break:break-word}
+.dashSub{font-size:12.5px;color:var(--muted);line-height:1.4;word-break:break-word;margin-top:-3px}
+.mapsBtn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:14px;padding:12px;font-weight:850;font-size:14px;margin-top:4px}
+.mapsBtn svg{flex:0 0 auto}
 @media(max-width:700px){
 .app{padding:14px} .pill{display:none} .heroTop{display:block} .hero h2{font-size:35px}
 .location{margin-top:14px} .details{grid-template-columns:1fr 1fr} .homeActions{grid-template-columns:1fr}
@@ -129,6 +134,12 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 <div class="card question"><h3 id="presence"></h3><div class="opts"><button class="opt" data-k="present" data-v="Ja">Ja</button><button class="opt" data-k="present" data-v="Nee">Nee</button></div></div>
 <div class="card question" id="driveQ"><h3>Kun je rijden?</h3><div class="opts"><button class="opt" data-k="drive" data-v="Ja">Ja</button><button class="opt" data-k="drive" data-v="Nee">Nee</button></div></div>
 <div id="seats" class="card question hidden"><h3>Hoeveel teamgenoten kunnen mee?</h3><div class="opts four"><button class="opt" data-k="seats" data-v="1">1</button><button class="opt" data-k="seats" data-v="2">2</button><button class="opt" data-k="seats" data-v="3">3</button><button class="opt" data-k="seats" data-v="4+">4+</button></div></div>
+<div class="card" id="fruitCard">
+<div class="eyebrow">Optioneel</div>
+<h3 id="fruitStatus">🍎 Fruit</h3>
+<div class="dashSub" id="fruitSub"></div>
+<button class="secondary hidden" id="fruitBtn" style="margin-top:10px"></button>
+</div>
 <button id="save" class="primary">Doorgeven</button>
 </section>
 
@@ -158,42 +169,132 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 </div>
 
 <script>
-let parents=[];let current=null,ans={present:null,drive:null,seats:null};
-function go(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');location.hash=id;if(id==='coach')coach();scrollTo(0,0)}
+let parents=[];let current=null,ans={present:null,drive:null,seats:null};let fruitState=null;
+function go(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');location.hash=id;if(id==='coach')coach();if(id==='home')trRenderMatches();scrollTo(0,0)}
 addEventListener('hashchange',()=>{let id=location.hash.slice(1);if(document.getElementById(id))go(id)})
 function render(q=''){let box=document.getElementById('list');box.innerHTML='';parents.filter(p=>(p.name+' '+p.children.join(' ')).toLowerCase().includes(q.toLowerCase())).forEach(p=>{let b=document.createElement('button');b.className='person';let initials=p.name.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();b.innerHTML='<span class="avatar">'+initials+'</span><span><strong>'+p.name+'</strong><small>'+p.children.join(' & ')+'</small></span>';b.onclick=()=>select(p);box.appendChild(b)})}
 document.getElementById('search').oninput=e=>render(e.target.value)
-async function select(p){current=p;let saved=null;try{const res=await fetch('/api/response?parent='+encodeURIComponent(p.name));saved=await res.json()}catch(e){saved=null}const isHome=!!(trActiveMatch&&trActiveMatch.home);ans=saved?{present:saved.present,drive:saved.drive,seats:saved.seats}:{present:null,drive:null,seats:null};if(isHome){ans.drive=null;ans.seats=null}document.getElementById('hello').textContent='Hoi '+p.name.split(' ')[0]+' 👋';document.getElementById('kids').innerHTML=p.children.map(c=>'<span class="chip">🏑 '+c+'</span>').join('');document.getElementById('presence').textContent=p.children.length===1?'Is '+p.children[0].split(' ')[0]+' aanwezig?':'Zijn '+p.children.map(c=>c.split(' ')[0]).join(' en ')+' aanwezig?';document.querySelectorAll('.opt').forEach(x=>x.classList.remove('active'));for(const[k,v]of Object.entries(ans)){if(!v)continue;let e=document.querySelector('[data-k="'+k+'"][data-v="'+v+'"]');if(e)e.classList.add('active')}document.getElementById('driveQ').classList.toggle('hidden',isHome);document.getElementById('seats').classList.toggle('hidden',isHome||ans.drive!=='Ja');go('form')}
+async function select(p){current=p;let saved=null;try{const res=await fetch('/api/response?parent='+encodeURIComponent(p.name)+'&match='+encodeURIComponent(trActiveMatch.id));saved=await res.json()}catch(e){saved=null}const isHome=!!(trActiveMatch&&trActiveMatch.home);ans=saved?{present:saved.present,drive:saved.drive,seats:saved.seats}:{present:null,drive:null,seats:null};if(isHome){ans.drive=null;ans.seats=null}document.getElementById('hello').textContent='Hoi '+p.name.split(' ')[0]+' 👋';document.getElementById('kids').innerHTML=p.children.map(c=>'<span class="chip">🏑 '+c+'</span>').join('');document.getElementById('presence').textContent=p.children.length===1?'Is '+p.children[0].split(' ')[0]+' aanwezig?':'Zijn '+p.children.map(c=>c.split(' ')[0]).join(' en ')+' aanwezig?';document.querySelectorAll('.opt').forEach(x=>x.classList.remove('active'));for(const[k,v]of Object.entries(ans)){if(!v)continue;let e=document.querySelector('[data-k="'+k+'"][data-v="'+v+'"]');if(e)e.classList.add('active')}document.getElementById('driveQ').classList.toggle('hidden',isHome);document.getElementById('seats').classList.toggle('hidden',isHome||ans.drive!=='Ja');await trLoadFruitCard();go('form')}
 document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{let k=b.dataset.k,v=b.dataset.v;document.querySelectorAll('[data-k="'+k+'"]').forEach(x=>x.classList.remove('active'));b.classList.add('active');ans[k]=v;if(k==='drive'){document.getElementById('seats').classList.toggle('hidden',v!=='Ja');if(v!=='Ja')ans.seats=null}})
-document.getElementById('save').onclick=async()=>{const isHome=!!(trActiveMatch&&trActiveMatch.home);if(!current||!ans.present)return alert('Beantwoord de vragen.');if(!isHome){if(!ans.drive)return alert('Beantwoord de vragen.');if(ans.drive==='Ja'&&!ans.seats)return alert('Vul het aantal plaatsen in.')}const btn=document.getElementById('save');btn.disabled=true;btn.textContent='Even opslaan...';try{const res=await fetch('/api/response',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:current.name,present:ans.present,drive:isHome?null:ans.drive,seats:isHome?null:ans.seats})});if(!res.ok)throw new Error('opslaan mislukt');document.getElementById('routeLink').style.display=isHome?'none':'';go('done')}catch(e){alert('Opslaan is niet gelukt. Controleer je internetverbinding en probeer het nogmaals.')}finally{btn.disabled=false;btn.textContent='Doorgeven'}}
+document.getElementById('save').onclick=async()=>{const isHome=!!(trActiveMatch&&trActiveMatch.home);if(!current||!ans.present)return alert('Beantwoord de vragen.');if(!isHome){if(!ans.drive)return alert('Beantwoord de vragen.');if(ans.drive==='Ja'&&!ans.seats)return alert('Vul het aantal plaatsen in.')}const btn=document.getElementById('save');btn.disabled=true;btn.textContent='Even opslaan...';try{const res=await fetch('/api/response',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:current.name,matchId:trActiveMatch.id,present:ans.present,drive:isHome?null:ans.drive,seats:isHome?null:ans.seats})});if(!res.ok)throw new Error('opslaan mislukt');document.getElementById('routeLink').style.display=isHome?'none':'';go('done')}catch(e){alert('Opslaan is niet gelukt. Controleer je internetverbinding en probeer het nogmaals.')}finally{btn.disabled=false;btn.textContent='Doorgeven'}}
 function badge(v){if(!v)return'<span class="badge empty">–</span>';return'<span class="badge '+(v==='Ja'?'yes':'no')+'">'+v+'</span>'}
-async function coach(){const isHome=!!(trActiveMatch&&trActiveMatch.home);document.getElementById('coach').classList.toggle('hideTransport',isHome);document.getElementById('rows').innerHTML='<tr><td colspan="5">Laden...</td></tr>';let data=[];try{const res=await fetch('/api/overview');data=await res.json()}catch(e){document.getElementById('rows').innerHTML='<tr><td colspan="5">Kon overzicht niet laden.</td></tr>';return}let rr=0,aa=0,dd=0,out='';data.forEach(p=>{if(p.present||p.drive){rr++;if(p.present==='Ja')aa++;if(p.drive==='Ja')dd++}out+='<tr><td><strong>'+p.name+'</strong></td><td>'+p.children.join('<br>')+'</td><td>'+badge(p.present)+'</td><td class="colDrive">'+badge(p.drive)+'</td><td class="colSeats">'+(p.drive==='Ja'?(p.seats||'–'):'–')+'</td></tr>'});document.getElementById('rows').innerHTML=out;document.getElementById('r').textContent=rr;document.getElementById('a').textContent=aa;document.getElementById('d').textContent=dd}
+async function coach(){const isHome=!!(trActiveMatch&&trActiveMatch.home);document.getElementById('coach').classList.toggle('hideTransport',isHome);document.querySelector('#coach h3').textContent='Teamoverzicht'+(trActiveMatch?' · '+trActiveMatch.date:' JO14-1');document.getElementById('rows').innerHTML='<tr><td colspan="5">Laden...</td></tr>';if(!trActiveMatch){document.getElementById('rows').innerHTML='<tr><td colspan="5">Kies eerst een wedstrijd.</td></tr>';return}let data=[];try{const res=await fetch('/api/overview?match='+encodeURIComponent(trActiveMatch.id));data=await res.json()}catch(e){document.getElementById('rows').innerHTML='<tr><td colspan="5">Kon overzicht niet laden.</td></tr>';return}let rr=0,aa=0,dd=0,out='';data.forEach(p=>{if(p.present||p.drive){rr++;if(p.present==='Ja')aa++;if(p.drive==='Ja')dd++}out+='<tr><td><strong>'+p.name+'</strong></td><td>'+p.children.join('<br>')+'</td><td>'+badge(p.present)+'</td><td class="colDrive">'+badge(p.drive)+'</td><td class="colSeats">'+(p.drive==='Ja'?(p.seats||'–'):'–')+'</td></tr>'});document.getElementById('rows').innerHTML=out;document.getElementById('r').textContent=rr;document.getElementById('a').textContent=aa;document.getElementById('d').textContent=dd}
 async function init(){try{const res=await fetch('/api/roster');parents=await res.json()}catch(e){parents=[]}render();if(location.hash){let id=location.hash.slice(1);if(document.getElementById(id))go(id)}}
 init();
 
 const trMatches=[
+{id:'m0',date:'ZA 29 AUGUSTUS · THUIS',teams:'Openingsweekend WFHC',meta:'Teamfoto · shirts · oefenwedstrijd · Programma volgt',home:true},
 {id:'m1',date:'Zaterdag 12 september 2026',teams:'WFHC JO14-1 · Terriërs/Castricum JO14-1',meta:'Thuis · tijd nog niet bekend',home:true},
 {id:'m2',date:'Zaterdag 19 september 2026',teams:'Waterland JO14-1 · WFHC JO14-1',meta:'Uit · tijd nog niet bekend',home:false},
 {id:'m3',date:'Zaterdag 26 september 2026',teams:'Heerhugowaard JO14-1 · WFHC JO14-1',meta:'Uit · tijd nog niet bekend',home:false},
 {id:'m4',date:'Zaterdag 3 oktober 2026',teams:'WFHC JO14-1 · Kraaien JO14-1',meta:'Thuis · tijd nog niet bekend',home:true}
 ];
 let trActiveMatch=null;
-function trStatus(id){return localStorage.getItem('tr_status_'+id)||''}
+const trMapsIcon='<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#EA4335" d="M12 2C7.58 2 4 5.58 4 10c0 5.25 7 11.5 7.3 11.76a1 1 0 0 0 1.4 0C13 21.5 20 15.25 20 10c0-4.42-3.58-8-8-8z"/><circle cx="12" cy="10" r="3.2" fill="#fff"/></svg>';
+function trCardShell(m){
+return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div></div></div><div id="dash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" onclick="trOpenMatch(\''+m.id+'\')">Organiseren</button></div>'
+}
+function trResponseHtml(list){
+let missing=list.filter(p=>!p.present);
+if(missing.length===0){return '<div class="dashLine">🟢 Iedereen heeft gereageerd</div>'}
+let names=missing.map(p=>p.name).join(' · ');
+return '<div class="dashLine">🟠 Nog '+missing.length+' reacties</div><div class="dashSub">Nog geen reactie: '+names+'</div>'
+}
+function trTransportHtml(list){
+let drivers=list.filter(p=>p.drive==='Ja');
+let n=drivers.length;
+let statusHtml;
+if(n<4){statusHtml='<div class="dashLine">🟠 Vervoer · '+n+' van 4 auto\'s</div>'}
+else if(n===4){statusHtml='<div class="dashLine">🟢 Vervoer geregeld · 4 van 4 auto\'s</div>'}
+else{statusHtml='<div class="dashLine">🟢 Vervoer geregeld · '+n+' auto\'s beschikbaar</div>'}
+let namesHtml=n>0?'<div class="dashSub">Rijden: '+drivers.map(p=>p.name).join(' · ')+'</div>':'<div class="dashSub">Nog geen chauffeurs aangemeld</div>';
+return statusHtml+namesHtml
+}
+function trFruitLine(fruitName){
+return '<div class="dashLine">'+(fruitName?'🍎 Fruit · '+fruitName:'🍎 Fruit · nog niet geregeld')+'</div>'
+}
+function trMapsHtml(){
+return '<a class="mapsBtn" target="_blank" href="https://www.google.com/maps/search/?api=1&query=Vikingpad+41+Amsterdam">'+trMapsIcon+' Google Maps</a>'
+}
+function trBuildDash(m,list,fruitName){
+let html=trResponseHtml(list);
+if(!m.home){html+=trTransportHtml(list)}
+html+=trFruitLine(fruitName);
+if(!m.home){html+=trMapsHtml()}
+return html
+}
+async function trLoadCard(m){
+const el=document.getElementById('dash-'+m.id);
+try{
+const[ov,fr]=await Promise.all([
+fetch('/api/overview?match='+encodeURIComponent(m.id)).then(r=>r.json()),
+fetch('/api/fruit?match='+encodeURIComponent(m.id)).then(r=>r.json())
+]);
+const list=Array.isArray(ov)?ov:[];
+const fruitName=fr&&fr.parentName?fr.parentName:null;
+if(el)el.innerHTML=trBuildDash(m,list,fruitName)
+}catch(e){
+if(el)el.innerHTML='<div class="dashSub">Kon status niet laden.</div>'
+}
+}
 function trRenderMatches(){
 let box=document.getElementById('matchList');
-box.innerHTML=trMatches.map(m=>{
-let st=trStatus(m.id);
-let pillClass=st?'statusPill statusActive':'statusPill statusOpen';
-let pillText=st||'Nog niets georganiseerd';
-let routeBtn=m.home?'':'<a class="secondary" target="_blank" href="https://www.google.com/maps/search/?api=1&query=Vikingpad+41+Amsterdam">🗺️ Route openen</a>';
-return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div></div><div class="'+pillClass+'">'+pillText+'</div></div>'+routeBtn+'<button class="organizeBtn" onclick="trOpenMatch(\''+m.id+'\')">Organiseren</button></div>'
-}).join('')
+box.innerHTML=trMatches.map(m=>trCardShell(m)).join('');
+trMatches.forEach(m=>trLoadCard(m))
 }
 function trOpenMatch(id){
 trActiveMatch=trMatches.find(m=>m.id===id);
-localStorage.setItem('tr_status_'+trActiveMatch.id,trActiveMatch.home?'Aanwezigheid actief':'Aanwezigheid & vervoer actief');
-trRenderMatches();
 go('ouder')
+}
+async function trLoadFruitCard(){
+try{
+const res=await fetch('/api/fruit?match='+encodeURIComponent(trActiveMatch.id));
+const data=await res.json();
+fruitState=data&&data.parentName?data.parentName:null
+}catch(e){fruitState=null}
+trRenderFruitCard()
+}
+function trRenderFruitCard(){
+const statusEl=document.getElementById('fruitStatus');
+const subEl=document.getElementById('fruitSub');
+const btn=document.getElementById('fruitBtn');
+if(!fruitState){
+statusEl.textContent='🍎 Fruit · nog niet geregeld';
+subEl.textContent='Eén ouder mag dit meenemen.';
+btn.textContent='🍎 Ik neem fruit mee';
+btn.classList.remove('hidden');
+btn.onclick=trClaimFruit
+}else if(current&&fruitState===current.name){
+statusEl.textContent='🍎 Fruit · jij neemt het mee';
+subEl.textContent='';
+btn.textContent='Fruit ongedaan maken';
+btn.classList.remove('hidden');
+btn.onclick=trUnclaimFruit
+}else{
+statusEl.textContent='🍎 Fruit · '+fruitState;
+subEl.textContent='Al geregeld door '+fruitState+'.';
+btn.classList.add('hidden')
+}
+}
+async function trClaimFruit(){
+const btn=document.getElementById('fruitBtn');
+btn.disabled=true;
+try{
+await fetch('/api/fruit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({matchId:trActiveMatch.id,parentName:current.name})});
+fruitState=current.name
+}catch(e){alert('Fruit doorgeven is niet gelukt. Probeer het nogmaals.')}
+btn.disabled=false;
+trRenderFruitCard()
+}
+async function trUnclaimFruit(){
+const btn=document.getElementById('fruitBtn');
+btn.disabled=true;
+try{
+await fetch('/api/fruit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({matchId:trActiveMatch.id,parentName:null})});
+fruitState=null
+}catch(e){alert('Ongedaan maken is niet gelukt. Probeer het nogmaals.')}
+btn.disabled=false;
+trRenderFruitCard()
 }
 trRenderMatches();
 </script>
