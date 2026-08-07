@@ -195,9 +195,10 @@ function trCardShell(m){
 return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div></div></div><div id="dash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" onclick="trOpenMatch(\''+m.id+'\')">Organiseren</button></div>'
 }
 function trResponseHtml(list){
-let missing=list.filter(p=>!p.present);
-if(missing.length===0){return '<div class="dashLine">🟢 Iedereen heeft gereageerd</div>'}
-return '<div class="dashLine">🟠 '+missing.length+' mensen moeten nog reageren</div>'
+let total=list.length;
+let responded=list.filter(p=>p.present||p.drive).length;
+let present=list.filter(p=>p.present==='Ja').length;
+return '<div class="stats" style="grid-template-columns:repeat(2,1fr)"><div class="stat"><span>Gereageerd</span><strong>'+responded+' van '+total+'</strong></div><div class="stat"><span>Aanwezig</span><strong>'+present+'</strong></div></div>'
 }
 function trTransportHtml(list){
 let drivers=list.filter(p=>p.drive==='Ja');
