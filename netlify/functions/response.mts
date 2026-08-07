@@ -15,14 +15,15 @@ export default async (req: Request, context: Context) => {
   if (req.method === "GET") {
     const url = new URL(req.url);
     const parent = url.searchParams.get("parent");
-    if (!parent) {
+    const match = url.searchParams.get("match");
+    if (!parent || !match) {
       return new Response(JSON.stringify(null), {
         headers: { "content-type": "application/json" },
       });
     }
 
     const res = await fetch(
-      `${base}/rest/v1/responses?parent_name=eq.${encodeURIComponent(parent)}&select=present,drive,seats`,
+      `${base}/rest/v1/responses?parent_name=eq.${encodeURIComponent(parent)}&match_id=eq.${encodeURIComponent(match)}&select=present,drive,seats`,
       { headers: supabaseHeaders() }
     );
 
@@ -47,9 +48,9 @@ export default async (req: Request, context: Context) => {
       return new Response(JSON.stringify({ error: "Ongeldige aanvraag" }), { status: 400 });
     }
 
-    const { name, present, drive, seats } = body ?? {};
-    if (!name) {
-      return new Response(JSON.stringify({ error: "name is verplicht" }), { status: 400 });
+    const { name, matchId, present, drive, seats } = body ?? {};
+    if (!name || !matchId) {
+      return new Response(JSON.stringify({ error: "name en matchId zijn verplicht" }), { status: 400 });
     }
 
     const res = await fetch(`${base}/rest/v1/responses`, {
@@ -61,6 +62,7 @@ export default async (req: Request, context: Context) => {
       body: JSON.stringify([
         {
           parent_name: name,
+          match_id: matchId,
           present: present ?? null,
           drive: drive ?? null,
           seats: seats ?? null,
