@@ -211,7 +211,8 @@ let namesHtml=n>0?'<div class="dashSub">Rijden: '+drivers.map(p=>p.name).join(' 
 return statusHtml+namesHtml
 }
 function trFruitLine(fruitName){
-return '<div class="dashLine">'+(fruitName?'🍎 Fruit · '+fruitName:'🍎 Neem jij fruit mee?')+'</div>'
+if(!fruitName){return ''}
+return '<div class="dashLine">🍎 Fruit · '+fruitName+'</div>'
 }
 function trMapsHtml(){
 return '<a class="mapsBtn" target="_blank" href="https://www.google.com/maps/search/?api=1&query=Vikingpad+41+Amsterdam">'+trMapsIcon+' Google Maps</a>'
