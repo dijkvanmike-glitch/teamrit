@@ -70,6 +70,8 @@ radial-gradient(circle at 95% 96%,#fff0bd 0 15%,transparent 15.2%),var(--bg);pad
 .stat{background:#f8fbf9;border:1px solid var(--line);border-radius:16px;padding:14px}
 .stat span{font-size:12px;color:var(--muted);text-transform:uppercase;font-weight:800}
 .stat strong{display:block;font-size:26px;margin-top:5px}
+.hideTransport .colDrive,.hideTransport .colSeats,.hideTransport .statDrive{display:none}
+.hideTransport .stats{grid-template-columns:repeat(2,1fr)}
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{padding:11px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 th{font-size:12px;color:var(--muted);text-transform:uppercase}
@@ -77,9 +79,10 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 .yes{background:#e5f4ed;color:var(--green)} .no{background:#f8e8e8;color:#a43e3e} .empty{background:#eef1ef;color:#7d8782}
 .note{font-size:12px;color:var(--muted);background:#f0f4f2;border-radius:12px;padding:10px;margin-top:10px}
 .footer{text-align:center;color:var(--muted);font-size:13px;margin-top:10px}
-.matchList{display:grid;gap:12px}
+.matchList{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
 .matchCard{background:rgba(255,255,255,.97);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:0 8px 20px rgba(24,63,50,.06)}
 .matchTop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.matchInfo{min-width:0}
 .matchDate{font-size:12px;font-weight:900;color:var(--green);text-transform:uppercase;letter-spacing:.4px}
 .matchTeams{font-size:17px;font-weight:800;margin:6px 0 2px}
 .matchMeta{color:var(--muted);font-size:13px}
@@ -124,7 +127,7 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 <button class="back" onclick="go('ouder')">‹</button>
 <div class="card"><div class="eyebrow">Jouw reactie</div><h3 id="hello"></h3><div id="kids" class="chips"></div></div>
 <div class="card question"><h3 id="presence"></h3><div class="opts"><button class="opt" data-k="present" data-v="Ja">Ja</button><button class="opt" data-k="present" data-v="Nee">Nee</button></div></div>
-<div class="card question"><h3>Kun je rijden?</h3><div class="opts"><button class="opt" data-k="drive" data-v="Ja">Ja</button><button class="opt" data-k="drive" data-v="Nee">Nee</button></div></div>
+<div class="card question" id="driveQ"><h3>Kun je rijden?</h3><div class="opts"><button class="opt" data-k="drive" data-v="Ja">Ja</button><button class="opt" data-k="drive" data-v="Nee">Nee</button></div></div>
 <div id="seats" class="card question hidden"><h3>Hoeveel teamgenoten kunnen mee?</h3><div class="opts four"><button class="opt" data-k="seats" data-v="1">1</button><button class="opt" data-k="seats" data-v="2">2</button><button class="opt" data-k="seats" data-v="3">3</button><button class="opt" data-k="seats" data-v="4+">4+</button></div></div>
 <button id="save" class="primary">Doorgeven</button>
 </section>
@@ -144,11 +147,11 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 <div class="stats">
 <div class="stat"><span>Gereageerd</span><strong id="r">0</strong></div>
 <div class="stat"><span>Aanwezig</span><strong id="a">0</strong></div>
-<div class="stat"><span>Rijders</span><strong id="d">0</strong></div>
+<div class="stat statDrive"><span>Rijders</span><strong id="d">0</strong></div>
 </div>
 </div>
 <div class="card" style="overflow:auto">
-<table><thead><tr><th>Ouder</th><th>Kind</th><th>Aanwezig</th><th>Rijdt</th><th>Plaatsen</th></tr></thead><tbody id="rows"></tbody></table>
+<table><thead><tr><th>Ouder</th><th>Kind</th><th>Aanwezig</th><th class="colDrive">Rijdt</th><th class="colSeats">Plaatsen</th></tr></thead><tbody id="rows"></tbody></table>
 <div class="note">Iedereen kan dit overzicht bekijken. Reacties worden gedeeld en direct bijgewerkt voor iedereen.</div>
 </div>
 </section>
@@ -160,19 +163,19 @@ function go(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remo
 addEventListener('hashchange',()=>{let id=location.hash.slice(1);if(document.getElementById(id))go(id)})
 function render(q=''){let box=document.getElementById('list');box.innerHTML='';parents.filter(p=>(p.name+' '+p.children.join(' ')).toLowerCase().includes(q.toLowerCase())).forEach(p=>{let b=document.createElement('button');b.className='person';let initials=p.name.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();b.innerHTML='<span class="avatar">'+initials+'</span><span><strong>'+p.name+'</strong><small>'+p.children.join(' & ')+'</small></span>';b.onclick=()=>select(p);box.appendChild(b)})}
 document.getElementById('search').oninput=e=>render(e.target.value)
-async function select(p){current=p;let saved=null;try{const res=await fetch('/api/response?parent='+encodeURIComponent(p.name));saved=await res.json()}catch(e){saved=null}ans=saved?{present:saved.present,drive:saved.drive,seats:saved.seats}:{present:null,drive:null,seats:null};document.getElementById('hello').textContent='Hoi '+p.name.split(' ')[0]+' 👋';document.getElementById('kids').innerHTML=p.children.map(c=>'<span class="chip">🏑 '+c+'</span>').join('');document.getElementById('presence').textContent=p.children.length===1?'Is '+p.children[0].split(' ')[0]+' aanwezig?':'Zijn '+p.children.map(c=>c.split(' ')[0]).join(' en ')+' aanwezig?';document.querySelectorAll('.opt').forEach(x=>x.classList.remove('active'));for(const[k,v]of Object.entries(ans)){if(!v)continue;let e=document.querySelector('[data-k="'+k+'"][data-v="'+v+'"]');if(e)e.classList.add('active')}document.getElementById('seats').classList.toggle('hidden',ans.drive!=='Ja');go('form')}
+async function select(p){current=p;let saved=null;try{const res=await fetch('/api/response?parent='+encodeURIComponent(p.name));saved=await res.json()}catch(e){saved=null}const isHome=!!(trActiveMatch&&trActiveMatch.home);ans=saved?{present:saved.present,drive:saved.drive,seats:saved.seats}:{present:null,drive:null,seats:null};if(isHome){ans.drive=null;ans.seats=null}document.getElementById('hello').textContent='Hoi '+p.name.split(' ')[0]+' 👋';document.getElementById('kids').innerHTML=p.children.map(c=>'<span class="chip">🏑 '+c+'</span>').join('');document.getElementById('presence').textContent=p.children.length===1?'Is '+p.children[0].split(' ')[0]+' aanwezig?':'Zijn '+p.children.map(c=>c.split(' ')[0]).join(' en ')+' aanwezig?';document.querySelectorAll('.opt').forEach(x=>x.classList.remove('active'));for(const[k,v]of Object.entries(ans)){if(!v)continue;let e=document.querySelector('[data-k="'+k+'"][data-v="'+v+'"]');if(e)e.classList.add('active')}document.getElementById('driveQ').classList.toggle('hidden',isHome);document.getElementById('seats').classList.toggle('hidden',isHome||ans.drive!=='Ja');go('form')}
 document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{let k=b.dataset.k,v=b.dataset.v;document.querySelectorAll('[data-k="'+k+'"]').forEach(x=>x.classList.remove('active'));b.classList.add('active');ans[k]=v;if(k==='drive'){document.getElementById('seats').classList.toggle('hidden',v!=='Ja');if(v!=='Ja')ans.seats=null}})
-document.getElementById('save').onclick=async()=>{if(!current||!ans.present||!ans.drive)return alert('Beantwoord de vragen.');if(ans.drive==='Ja'&&!ans.seats)return alert('Vul het aantal plaatsen in.');const btn=document.getElementById('save');btn.disabled=true;btn.textContent='Even opslaan...';try{const res=await fetch('/api/response',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:current.name,present:ans.present,drive:ans.drive,seats:ans.seats})});if(!res.ok)throw new Error('opslaan mislukt');go('done')}catch(e){alert('Opslaan is niet gelukt. Controleer je internetverbinding en probeer het nogmaals.')}finally{btn.disabled=false;btn.textContent='Doorgeven'}}
+document.getElementById('save').onclick=async()=>{const isHome=!!(trActiveMatch&&trActiveMatch.home);if(!current||!ans.present)return alert('Beantwoord de vragen.');if(!isHome){if(!ans.drive)return alert('Beantwoord de vragen.');if(ans.drive==='Ja'&&!ans.seats)return alert('Vul het aantal plaatsen in.')}const btn=document.getElementById('save');btn.disabled=true;btn.textContent='Even opslaan...';try{const res=await fetch('/api/response',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:current.name,present:ans.present,drive:isHome?null:ans.drive,seats:isHome?null:ans.seats})});if(!res.ok)throw new Error('opslaan mislukt');go('done')}catch(e){alert('Opslaan is niet gelukt. Controleer je internetverbinding en probeer het nogmaals.')}finally{btn.disabled=false;btn.textContent='Doorgeven'}}
 function badge(v){if(!v)return'<span class="badge empty">–</span>';return'<span class="badge '+(v==='Ja'?'yes':'no')+'">'+v+'</span>'}
-async function coach(){document.getElementById('rows').innerHTML='<tr><td colspan="5">Laden...</td></tr>';let data=[];try{const res=await fetch('/api/overview');data=await res.json()}catch(e){document.getElementById('rows').innerHTML='<tr><td colspan="5">Kon overzicht niet laden.</td></tr>';return}let rr=0,aa=0,dd=0,out='';data.forEach(p=>{if(p.present||p.drive){rr++;if(p.present==='Ja')aa++;if(p.drive==='Ja')dd++}out+='<tr><td><strong>'+p.name+'</strong></td><td>'+p.children.join('<br>')+'</td><td>'+badge(p.present)+'</td><td>'+badge(p.drive)+'</td><td>'+(p.drive==='Ja'?(p.seats||'–'):'–')+'</td></tr>'});document.getElementById('rows').innerHTML=out;document.getElementById('r').textContent=rr;document.getElementById('a').textContent=aa;document.getElementById('d').textContent=dd}
+async function coach(){const isHome=!!(trActiveMatch&&trActiveMatch.home);document.getElementById('coach').classList.toggle('hideTransport',isHome);document.getElementById('rows').innerHTML='<tr><td colspan="5">Laden...</td></tr>';let data=[];try{const res=await fetch('/api/overview');data=await res.json()}catch(e){document.getElementById('rows').innerHTML='<tr><td colspan="5">Kon overzicht niet laden.</td></tr>';return}let rr=0,aa=0,dd=0,out='';data.forEach(p=>{if(p.present||p.drive){rr++;if(p.present==='Ja')aa++;if(p.drive==='Ja')dd++}out+='<tr><td><strong>'+p.name+'</strong></td><td>'+p.children.join('<br>')+'</td><td>'+badge(p.present)+'</td><td class="colDrive">'+badge(p.drive)+'</td><td class="colSeats">'+(p.drive==='Ja'?(p.seats||'–'):'–')+'</td></tr>'});document.getElementById('rows').innerHTML=out;document.getElementById('r').textContent=rr;document.getElementById('a').textContent=aa;document.getElementById('d').textContent=dd}
 async function init(){try{const res=await fetch('/api/roster');parents=await res.json()}catch(e){parents=[]}render();if(location.hash){let id=location.hash.slice(1);if(document.getElementById(id))go(id)}}
 init();
 
 const trMatches=[
-{id:'m1',date:'Zaterdag 12 september 2026',teams:'WFHC JO14-1 · Terriërs/Castricum JO14-1',meta:'Thuis · tijd nog niet bekend'},
-{id:'m2',date:'Zaterdag 19 september 2026',teams:'Waterland JO14-1 · WFHC JO14-1',meta:'Uit · tijd nog niet bekend'},
-{id:'m3',date:'Zaterdag 26 september 2026',teams:'Heerhugowaard JO14-1 · WFHC JO14-1',meta:'Uit · tijd nog niet bekend'},
-{id:'m4',date:'Zaterdag 3 oktober 2026',teams:'WFHC JO14-1 · Kraaien JO14-1',meta:'Thuis · tijd nog niet bekend'}
+{id:'m1',date:'Zaterdag 12 september 2026',teams:'WFHC JO14-1 · Terriërs/Castricum JO14-1',meta:'Thuis · tijd nog niet bekend',home:true},
+{id:'m2',date:'Zaterdag 19 september 2026',teams:'Waterland JO14-1 · WFHC JO14-1',meta:'Uit · tijd nog niet bekend',home:false},
+{id:'m3',date:'Zaterdag 26 september 2026',teams:'Heerhugowaard JO14-1 · WFHC JO14-1',meta:'Uit · tijd nog niet bekend',home:false},
+{id:'m4',date:'Zaterdag 3 oktober 2026',teams:'WFHC JO14-1 · Kraaien JO14-1',meta:'Thuis · tijd nog niet bekend',home:true}
 ];
 let trActiveMatch=null;
 function trStatus(id){return localStorage.getItem('tr_status_'+id)||''}
@@ -182,12 +185,12 @@ box.innerHTML=trMatches.map(m=>{
 let st=trStatus(m.id);
 let pillClass=st?'statusPill statusActive':'statusPill statusOpen';
 let pillText=st||'Nog niets georganiseerd';
-return '<div class="matchCard"><div class="matchTop"><div><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div></div><div class="'+pillClass+'">'+pillText+'</div></div><button class="organizeBtn" onclick="trOpenMatch(\''+m.id+'\')">Organiseren</button></div>'
+return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div></div><div class="'+pillClass+'">'+pillText+'</div></div><button class="organizeBtn" onclick="trOpenMatch(\''+m.id+'\')">Organiseren</button></div>'
 }).join('')
 }
 function trOpenMatch(id){
 trActiveMatch=trMatches.find(m=>m.id===id);
-localStorage.setItem('tr_status_'+trActiveMatch.id,'Aanwezigheid & vervoer actief');
+localStorage.setItem('tr_status_'+trActiveMatch.id,trActiveMatch.home?'Aanwezigheid actief':'Aanwezigheid & vervoer actief');
 trRenderMatches();
 go('ouder')
 }
