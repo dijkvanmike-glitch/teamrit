@@ -8,9 +8,18 @@ export default async (req: Request, context: Context) => {
   const key = Netlify.env.get("SUPABASE_ANON_KEY") ?? "";
   const headers = { apikey: key, Authorization: `Bearer ${key}` };
 
+  const url = new URL(req.url);
+  const match = url.searchParams.get("match");
+  if (!match) {
+    return new Response(JSON.stringify({ error: "match is verplicht" }), {
+      status: 400,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
   const [parentsRes, responsesRes] = await Promise.all([
     fetch(`${base}/rest/v1/parents?select=name,children&order=name`, { headers }),
-    fetch(`${base}/rest/v1/responses?select=parent_name,present,drive,seats`, { headers }),
+    fetch(`${base}/rest/v1/responses?match_id=eq.${encodeURIComponent(match)}&select=parent_name,present,drive,seats`, { headers }),
   ]);
 
   if (!parentsRes.ok || !responsesRes.ok) {
