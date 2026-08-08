@@ -95,6 +95,7 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 .dashSub{font-size:12.5px;color:var(--muted);line-height:1.4;word-break:break-word;margin-top:-3px}
 .mapsBtn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:14px;padding:12px;font-weight:850;font-size:14px;margin-top:4px}
 .mapsBtn svg{flex:0 0 auto}
+.coachLink{margin-top:14px;background:none;border:0;padding:0;color:var(--muted);font-size:13px;font-weight:800;text-decoration:underline;cursor:pointer}
 @media(max-width:700px){
 .app{padding:14px} .pill{display:none} .heroTop{display:block} .hero h2{font-size:35px}
 .location{margin-top:14px} .details{grid-template-columns:1fr 1fr} .homeActions{grid-template-columns:1fr}
@@ -114,6 +115,7 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 <div class="eyebrow">Mijn wedstrijden</div>
 <h2 style="font-size:28px;margin:12px 0 4px">WFHC JO14-1</h2>
 <div style="color:var(--muted)">Kies een wedstrijd om te organiseren.</div>
+<button class="coachLink" onclick="go('coachpicker')">Ben jij de coach? Coachoverzicht</button>
 </div>
 <div id="matchList" class="matchList"></div>
 <div class="footer">Geen app nodig · gewoon via de WhatsApp-link</div>
@@ -151,6 +153,16 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 <button class="secondary" onclick="go('home')">Terug naar start</button>
 </section>
 
+<section id="coachpicker" class="screen">
+<button class="back" onclick="go('home')">‹</button>
+<div class="card hero">
+<div class="eyebrow">Coachoverzicht</div>
+<h2 style="font-size:28px;margin:12px 0 4px">Coachstatus beheren</h2>
+<div style="color:var(--muted)">Kies een wedstrijd. Dit is coachbeheer, geen ouderreactie.</div>
+</div>
+<div id="coachMatchList" class="matchList"></div>
+</section>
+
 <section id="coach" class="screen">
 <button class="back" onclick="go('home')">‹</button>
 <div class="card">
@@ -184,7 +196,7 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 
 <script>
 let parents=[];let current=null,ans={present:null,drive:null,seats:null};let fruitState=null;
-function go(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');location.hash=id;if(id==='coach')coach();if(id==='home')trRenderMatches();scrollTo(0,0)}
+function go(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');location.hash=id;if(id==='coach')coach();if(id==='home')trRenderMatches();if(id==='coachpicker')trRenderCoachPicker();scrollTo(0,0)}
 addEventListener('hashchange',()=>{let id=location.hash.slice(1);if(document.getElementById(id))go(id)})
 function render(q=''){let box=document.getElementById('list');box.innerHTML='';parents.filter(p=>(p.name+' '+p.children.join(' ')).toLowerCase().includes(q.toLowerCase())).forEach(p=>{let b=document.createElement('button');b.className='person';let initials=p.name.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();b.innerHTML='<span class="avatar">'+initials+'</span><span><strong>'+p.name+'</strong><small>'+p.children.join(' & ')+'</small></span>';b.onclick=()=>select(p);box.appendChild(b)})}
 document.getElementById('search').oninput=e=>render(e.target.value)
@@ -369,6 +381,33 @@ trRenderCoachControl();
 try{
 await fetch('/api/coach',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({matchId:trActiveMatch.id,present:'Nee',substitute:null})})
 }catch(e){alert('Verwijderen is niet gelukt. Probeer het nogmaals.')}
+}
+function trCoachCardShell(m){
+return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div></div></div><div id="coachdash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" onclick="trOpenCoachMatch(\''+m.id+'\')">Coachstatus beheren</button></div>'
+}
+function trCoachPickerLine(coach){
+if(coach&&coach.present==='Ja'){return '<div class="dashLine">🟢 Coach aanwezig · Thijs</div>'}
+if(coach&&coach.present==='Nee'&&coach.substitute){return '<div class="dashLine">🟠 Thijs afwezig</div><div class="dashSub">Coaching: '+coach.substitute+'</div>'}
+if(coach&&coach.present==='Nee'){return '<div class="dashLine">🔴 Coach afwezig</div><div class="dashSub">Nog geen vervangende coach</div>'}
+return '<div class="dashSub">Coachstatus nog niet ingevuld</div>'
+}
+async function trLoadCoachPickerCard(m){
+const el=document.getElementById('coachdash-'+m.id);
+try{
+const co=await fetch('/api/coach?match='+encodeURIComponent(m.id)).then(r=>r.json());
+if(el)el.innerHTML=trCoachPickerLine(co)
+}catch(e){
+if(el)el.innerHTML='<div class="dashSub">Kon status niet laden.</div>'
+}
+}
+function trRenderCoachPicker(){
+let box=document.getElementById('coachMatchList');
+box.innerHTML=trMatches.map(m=>trCoachCardShell(m)).join('');
+trMatches.forEach(m=>trLoadCoachPickerCard(m))
+}
+function trOpenCoachMatch(id){
+trActiveMatch=trMatches.find(m=>m.id===id);
+go('coach')
 }
 trRenderMatches();
 </script>
