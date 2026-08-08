@@ -95,7 +95,7 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 .dashSub{font-size:12.5px;color:var(--muted);line-height:1.4;word-break:break-word;margin-top:-3px}
 .mapsBtn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:14px;padding:12px;font-weight:850;font-size:14px;margin-top:4px}
 .mapsBtn svg{flex:0 0 auto}
-.coachLink{margin-top:14px;background:none;border:0;padding:0;color:var(--muted);font-size:13px;font-weight:800;text-decoration:underline;cursor:pointer}
+.coachLink{margin-top:14px;background:none;border:0;padding:0;color:var(--muted);font-size:13px;font-weight:800;text-decoration:underline;cursor:pointer} .backLink{border:0;background:none;padding:0 0 14px;margin:0;color:var(--green);font-weight:900;font-size:15px;cursor:pointer;display:inline-block}
 @media(max-width:700px){
 .app{padding:14px} .pill{display:none} .heroTop{display:block} .hero h2{font-size:35px}
 .location{margin-top:14px} .details{grid-template-columns:1fr 1fr} .homeActions{grid-template-columns:1fr}
@@ -154,7 +154,7 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 </section>
 
 <section id="coachpicker" class="screen">
-<button class="back" onclick="go('home')">‹</button>
+<button class="backLink" onclick="go('home')">← Mijn wedstrijden</button>
 <div class="card hero">
 <div class="eyebrow">Coachoverzicht</div>
 <h2 style="font-size:28px;margin:12px 0 4px">Coachstatus beheren</h2>
@@ -164,7 +164,7 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 </section>
 
 <section id="coach" class="screen">
-<button class="back" onclick="go('home')">‹</button>
+<button class="backLink" onclick="go('home')">← Mijn wedstrijden</button>
 <div class="card">
 <div class="eyebrow">Teamoverzicht</div><h3>Teamoverzicht JO14-1</h3>
 <div class="stats">
@@ -243,9 +243,9 @@ return '<div class="dashLine">🍎 Fruit · '+fruitName+'</div>'
 }
 function trCoachLine(coach){
 if(!coach||!coach.present){return ''}
-if(coach.present==='Ja'){return '<div class="dashLine">🟢 Coach aanwezig · Thijs</div>'}
-if(coach.substitute){return '<div class="dashLine">🟠 Thijs afwezig</div><div class="dashSub">Coaching: '+coach.substitute+'</div>'}
-return '<div class="dashLine">🔴 Coach afwezig</div><div class="dashSub">Nog geen vervangende coach</div>'
+if(coach.present==='Ja'){return '<div class="dashLine">🟢 Coach · Thijs</div>'}
+if(coach.substitute){return '<div class="dashLine">🟠 Coaching · '+coach.substitute+'</div>'}
+return '<div class="dashLine">🔴 Coach afwezig</div>'
 }
 function trMapsHtml(){
 return '<a class="mapsBtn" target="_blank" href="https://www.google.com/maps/search/?api=1&query=Vikingpad+41+Amsterdam">'+trMapsIcon+' Google Maps</a>'
