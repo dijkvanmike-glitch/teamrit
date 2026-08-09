@@ -392,6 +392,13 @@ let total=h*60+m-mins;
 total=((total%1440)+1440)%1440;
 return trPad2(Math.floor(total/60))+':'+trPad2(total%60)
 }
+function trFloorTo5(hhmm){
+let[h,m]=hhmm.split(':').map(Number);
+let total=h*60+m;
+total=Math.floor(total/5)*5;
+total=((total%1440)+1440)%1440;
+return trPad2(Math.floor(total/60))+':'+trPad2(total%60)
+}
 function trOpponentName(m){
 let parts=m.teams.split('·').map(s=>s.trim());
 return parts.find(t=>!t.toUpperCase().includes('WFHC'))||parts[0]
@@ -402,7 +409,7 @@ if(m.home){
 return '<div class="dashLine">📍 Aanwezig WFHC · '+trMinusMinutes(m.time,60)+'</div>'
 }
 if(typeof m.travelMinutes!=='number')return'';
-const departWfhc=trMinusMinutes(m.time,45+m.travelMinutes);
+const departWfhc=trFloorTo5(trMinusMinutes(m.time,45+m.travelMinutes));
 const arriveOpp=trMinusMinutes(m.time,45);
 return '<div class="dashLine">🚗 Verzamelen WFHC · '+departWfhc+'</div><div class="dashLine">📍 Aanwezig '+trOpponentName(m)+' · '+arriveOpp+'</div><div class="dashSub">🗺️ Reistijd · ±'+m.travelMinutes+' min</div>'
 }
