@@ -98,6 +98,8 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 .mapsBtn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:14px;padding:12px;font-weight:850;font-size:14px;margin-top:4px}
 .mapsBtn svg{flex:0 0 auto}
 .coachLink{margin-top:14px;background:none;border:0;padding:0;color:var(--muted);font-size:13px;font-weight:800;text-decoration:underline;cursor:pointer} .backLink{border:0;background:none;padding:0 0 14px;margin:0;color:var(--green);font-weight:900;font-size:15px;cursor:pointer;display:inline-block}
+.tip{background:var(--green2);border-color:var(--green2)}
+.tipTitle{font-weight:850}
 @media(max-width:700px){
 .app{padding:14px} .pill{display:none} .heroTop{display:block} .hero h2{font-size:35px}
 .location{margin-top:14px} .details{grid-template-columns:1fr 1fr} .homeActions{grid-template-columns:1fr}
@@ -135,6 +137,17 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 <section id="form" class="screen">
 <button class="back" onclick="go('ouder')">‹</button>
 <div class="card"><div class="eyebrow">Jouw reactie</div><h3 id="hello"></h3><div id="kids" class="chips"></div></div>
+<div class="card tip" id="familyTip">
+<div class="tipTitle">💡 Eén reactie per kind is genoeg</div>
+<div class="dashSub" style="margin-top:6px">Heeft je kind twee ouders/verzorgers in de groep? Dan hoeft maar één van jullie de voorkeur door te geven. De ander kan de keuze later bekijken of wijzigen.</div>
+</div>
+<div class="card hidden" id="alreadyCard">
+<div class="eyebrow">Al geregeld</div>
+<h3 id="alreadyTitle"></h3>
+<div class="dashSub">Je hoeft niets meer te doen, maar je kunt de keuze wel bekijken of wijzigen.</div>
+<div id="alreadySummary" class="dashBlock"></div>
+<button class="secondary" id="alreadyWijzigenBtn">Wijzigen</button>
+</div>
 <div class="card question" id="presenceCard"><h3 id="presence"></h3><div class="opts"><button class="opt" data-k="present" data-v="Ja">Ja</button><button class="opt" data-k="present" data-v="Nee">Nee</button></div></div>
 <div class="card question hidden" id="infoQ"><h3>Ben je erbij op 14 augustus?</h3><div class="opts" style="grid-template-columns:1fr"><button class="opt" data-k="infoAnswer" data-v="samen">Wij zijn erbij</button><button class="opt" id="infoSpelerBtn" data-k="infoAnswer" data-v="speler">Alleen … is erbij</button><button class="opt" data-k="infoAnswer" data-v="geen">Wij kunnen niet</button></div></div>
 <div class="card question" id="driveQ"><h3>Kun je rijden?</h3><div class="opts"><button class="opt" data-k="drive" data-v="Ja">Ja</button><button class="opt" data-k="drive" data-v="Nee">Nee</button></div></div>
@@ -196,22 +209,57 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 </div>
 </div>
 <div class="card" style="overflow:auto" id="rowsCard">
-<table><thead><tr><th>Ouder</th><th>Kind</th><th>Aanwezig</th><th class="colDrive">Rijdt</th><th class="colSeats">Plaatsen</th></tr></thead><tbody id="rows"></tbody></table>
-<div class="note">Iedereen kan dit overzicht bekijken. Reacties worden gedeeld en direct bijgewerkt voor iedereen.</div>
+<table><thead><tr><th>Ouder(s)</th><th>Kind</th><th>Aanwezig</th><th class="colDrive">Rijdt</th><th class="colSeats">Plaatsen</th></tr></thead><tbody id="rows"></tbody></table>
+<div class="note">Iedereen kan dit overzicht bekijken. Reacties worden gedeeld en direct bijgewerkt voor iedereen. Eén reactie per speler telt, ook als beide ouders gekoppeld zijn.</div>
 </div>
 <div class="card hidden" id="infoRowsCard">
 <div id="infoRows"></div>
-<div class="note">Iedereen kan dit overzicht bekijken. Reacties worden gedeeld en direct bijgewerkt voor iedereen.</div>
+<div class="note">Iedereen kan dit overzicht bekijken. Reacties worden gedeeld en direct bijgewerkt voor iedereen. Eén reactie per speler telt, ook als beide ouders gekoppeld zijn.</div>
 </div>
 </section>
 </div>
 
 <script>
 let parents=[];let current=null,ans={present:null,drive:null,seats:null,infoAnswer:null};let fruitState=null;
+let trSavedAnswer=null,editMode=true,trChildText='';
 function go(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');location.hash=id;if(id==='coach')coach();if(id==='home')trRenderMatches();if(id==='coachpicker')trRenderCoachPicker();scrollTo(0,0)}
 addEventListener('hashchange',()=>{let id=location.hash.slice(1);if(document.getElementById(id))go(id)})
 function render(q=''){let box=document.getElementById('list');box.innerHTML='';parents.filter(p=>(p.name+' '+p.children.join(' ')).toLowerCase().includes(q.toLowerCase())).forEach(p=>{let b=document.createElement('button');b.className='person';let initials=p.name.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();b.innerHTML='<span class="avatar">'+initials+'</span><span><strong>'+p.name+'</strong><small>'+p.children.join(' & ')+'</small></span>';b.onclick=()=>select(p);box.appendChild(b)})}
 document.getElementById('search').oninput=e=>render(e.target.value)
+function trAnswerSummaryHtml(saved,isHome,isInfo){
+if(isInfo){
+return '<div class="dashLine">Speler aanwezig '+(saved.present==='Ja'?'✓':'✗')+'</div><div class="dashLine">Ouder/verzorger aanwezig '+(saved.parentPresent==='Ja'?'✓':'✗')+'</div>'
+}
+let html='<div class="dashLine">Aanwezig '+(saved.present==='Ja'?'✓':'✗')+'</div>';
+if(!isHome){
+html+='<div class="dashLine">Kan rijden '+(saved.drive==='Ja'?'✓':'✗')+'</div>';
+if(saved.drive==='Ja')html+='<div class="dashLine">'+(saved.seats||'–')+' plekken</div>'
+}
+return html
+}
+function trRenderFormMode(isHome,isInfo){
+const hasSaved=!!trSavedAnswer;
+document.getElementById('familyTip').classList.toggle('hidden',hasSaved);
+document.getElementById('alreadyCard').classList.toggle('hidden',!hasSaved||editMode);
+if(hasSaved){
+const isAreDoorgegeven=current.children.length===1?'is al doorgegeven':'zijn al doorgegeven';
+document.getElementById('alreadyTitle').textContent='✓ '+trChildText+' '+isAreDoorgegeven;
+document.getElementById('alreadySummary').innerHTML=trAnswerSummaryHtml(trSavedAnswer,isHome,isInfo)
+}
+const showForm=editMode;
+document.getElementById('presenceCard').classList.toggle('hidden',isInfo||!showForm);
+document.getElementById('infoQ').classList.toggle('hidden',!isInfo||!showForm);
+document.getElementById('driveQ').classList.toggle('hidden',isInfo||isHome||!showForm);
+document.getElementById('seats').classList.toggle('hidden',isInfo||isHome||ans.drive!=='Ja'||!showForm);
+document.getElementById('save').classList.toggle('hidden',!showForm);
+document.getElementById('save').textContent=isInfo?'Opslaan':'Doorgeven'
+}
+document.getElementById('alreadyWijzigenBtn').onclick=()=>{
+editMode=true;
+const isHome=!!(trActiveMatch&&trActiveMatch.home);
+const isInfo=!!(trActiveMatch&&trActiveMatch.type==='info');
+trRenderFormMode(isHome,isInfo)
+}
 async function select(p){
 current=p;
 let saved=null;
@@ -229,16 +277,15 @@ document.getElementById('hello').textContent='Hoi '+p.name.split(' ')[0]+' 👋'
 document.getElementById('kids').innerHTML=p.children.map(c=>'<span class="chip">🏑 '+c+'</span>').join('');
 const childText=p.children.length===1?p.children[0].split(' ')[0]:p.children.map(c=>c.split(' ')[0]).join(' en ');
 const isAre=p.children.length===1?'is':'zijn';
+trChildText=childText;
 document.getElementById('presence').textContent=p.children.length===1?'Is '+childText+' aanwezig?':'Zijn '+childText+' aanwezig?';
 document.getElementById('infoSpelerBtn').textContent='Alleen '+childText+' '+isAre+' erbij';
 document.querySelectorAll('.opt').forEach(x=>x.classList.remove('active'));
 for(const[k,v]of Object.entries(ans)){if(!v)continue;let e=document.querySelector('[data-k="'+k+'"][data-v="'+v+'"]');if(e)e.classList.add('active')}
-document.getElementById('presenceCard').classList.toggle('hidden',isInfo);
-document.getElementById('infoQ').classList.toggle('hidden',!isInfo);
-document.getElementById('driveQ').classList.toggle('hidden',isInfo||isHome);
-document.getElementById('seats').classList.toggle('hidden',isInfo||isHome||ans.drive!=='Ja');
+trSavedAnswer=saved;
+editMode=!saved;
 document.getElementById('fruitCard').classList.toggle('hidden',isInfo);
-document.getElementById('save').textContent=isInfo?'Opslaan':'Doorgeven';
+trRenderFormMode(isHome,isInfo);
 if(!isInfo){await trLoadFruitCard()}
 go('form')
 }
@@ -304,7 +351,7 @@ let out='';
 players.forEach(x=>{
 if(!x.present){out+='<div class="dashLine">'+x.child+' <span class="dashSub">nog niet gereageerd</span></div>'}
 else if(x.present==='Nee'){out+='<div class="dashLine">'+x.child+' <span class="dashSub">niet aanwezig</span></div>'}
-else{out+='<div class="dashLine">'+x.child+' <span class="dashSub">speler '+(x.present==='Ja'?'✓':'—')+'  ·  ouder '+(x.parentPresent==='Ja'?'✓':'—')+'</span></div>'}
+else{out+='<div class="dashLine">'+x.child+' <span class="dashSub">speler '+(x.present==='Ja'?'✓':'—')+' · ouder '+(x.parentPresent==='Ja'?'✓':'—')+'</span></div>'}
 });
 document.getElementById('infoRows').innerHTML=out||'<div class="dashSub">Nog geen reacties.</div>';
 return
