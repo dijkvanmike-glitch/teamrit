@@ -23,7 +23,7 @@ export default async (req: Request, context: Context) => {
     }
 
     const res = await fetch(
-      `${base}/rest/v1/responses?parent_name=eq.${encodeURIComponent(parent)}&match_id=eq.${encodeURIComponent(match)}&select=present,drive,seats`,
+      `${base}/rest/v1/responses?parent_name=eq.${encodeURIComponent(parent)}&match_id=eq.${encodeURIComponent(match)}&select=present,drive,seats,parent_present`,
       { headers: supabaseHeaders() }
     );
 
@@ -35,7 +35,11 @@ export default async (req: Request, context: Context) => {
     }
 
     const rows = await res.json();
-    return new Response(JSON.stringify(rows[0] ?? null), {
+    const row = rows[0] ?? null;
+    const out = row
+      ? { present: row.present, drive: row.drive, seats: row.seats, parentPresent: row.parent_present }
+      : null;
+    return new Response(JSON.stringify(out), {
       headers: { "content-type": "application/json" },
     });
   }
@@ -48,7 +52,7 @@ export default async (req: Request, context: Context) => {
       return new Response(JSON.stringify({ error: "Ongeldige aanvraag" }), { status: 400 });
     }
 
-    const { name, matchId, present, drive, seats } = body ?? {};
+    const { name, matchId, present, drive, seats, parentPresent } = body ?? {};
     if (!name || !matchId) {
       return new Response(JSON.stringify({ error: "name en matchId zijn verplicht" }), { status: 400 });
     }
@@ -66,6 +70,7 @@ export default async (req: Request, context: Context) => {
           present: present ?? null,
           drive: drive ?? null,
           seats: seats ?? null,
+          parent_present: parentPresent ?? null,
           updated_at: new Date().toISOString(),
         },
       ]),
