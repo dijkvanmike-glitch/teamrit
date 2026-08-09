@@ -9,8 +9,18 @@ function supabaseHeaders() {
   };
 }
 
+async function familyKeyForParent(base: string, headers: Record<string, string>, name: string): Promise<string | null> {
+  const res = await fetch(`${base}/rest/v1/parents?name=eq.${encodeURIComponent(name)}&select=children`, { headers });
+  if (!res.ok) return null;
+  const rows = await res.json();
+  const children: string[] = rows[0]?.children ?? [];
+  if (!children.length) return null;
+  return [...children].sort().join("|");
+}
+
 export default async (req: Request, context: Context) => {
-  const base = Netlify.env.get("SUPABASE_URL");
+  const base = Netlify.env.get("SUPABASE_URL") ?? "";
+  const headers = supabaseHeaders();
 
   if (req.method === "GET") {
     const url = new URL(req.url);
@@ -22,9 +32,16 @@ export default async (req: Request, context: Context) => {
       });
     }
 
+    const familyKey = await familyKeyForParent(base, headers, parent);
+    if (!familyKey) {
+      return new Response(JSON.stringify(null), {
+        headers: { "content-type": "application/json" },
+      });
+    }
+
     const res = await fetch(
-      `${base}/rest/v1/responses?parent_name=eq.${encodeURIComponent(parent)}&match_id=eq.${encodeURIComponent(match)}&select=present,drive,seats,parent_present`,
-      { headers: supabaseHeaders() }
+      `${base}/rest/v1/responses?family_key=eq.${encodeURIComponent(familyKey)}&match_id=eq.${encodeURIComponent(match)}&select=present,drive,seats,parent_present,parent_name`,
+      { headers }
     );
 
     if (!res.ok) {
@@ -37,7 +54,7 @@ export default async (req: Request, context: Context) => {
     const rows = await res.json();
     const row = rows[0] ?? null;
     const out = row
-      ? { present: row.present, drive: row.drive, seats: row.seats, parentPresent: row.parent_present }
+      ? { present: row.present, drive: row.drive, seats: row.seats, parentPresent: row.parent_present, respondedBy: row.parent_name }
       : null;
     return new Response(JSON.stringify(out), {
       headers: { "content-type": "application/json" },
@@ -57,14 +74,20 @@ export default async (req: Request, context: Context) => {
       return new Response(JSON.stringify({ error: "name en matchId zijn verplicht" }), { status: 400 });
     }
 
+    const familyKey = await familyKeyForParent(base, headers, name);
+    if (!familyKey) {
+      return new Response(JSON.stringify({ error: "Onbekende ouder" }), { status: 400 });
+    }
+
     const res = await fetch(`${base}/rest/v1/responses`, {
       method: "POST",
       headers: {
-        ...supabaseHeaders(),
+        ...headers,
         Prefer: "resolution=merge-duplicates,return=minimal",
       },
       body: JSON.stringify([
         {
+          family_key: familyKey,
           parent_name: name,
           match_id: matchId,
           present: present ?? null,
