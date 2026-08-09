@@ -67,6 +67,7 @@ radial-gradient(circle at 95% 96%,#fff0bd 0 15%,transparent 15.2%),var(--bg);pad
 .secondary{background:#e9efec;color:var(--ink);margin-top:9px}
 .confirm{text-align:center} .check{font-size:58px}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stats.hidden{display:none}
 .stat{background:#f8fbf9;border:1px solid var(--line);border-radius:16px;padding:14px}
 .stat span{font-size:12px;color:var(--muted);text-transform:uppercase;font-weight:800}
 .stat strong{display:block;font-size:26px;margin-top:5px}
@@ -237,6 +238,7 @@ document.getElementById('infoQ').classList.toggle('hidden',!isInfo);
 document.getElementById('driveQ').classList.toggle('hidden',isInfo||isHome);
 document.getElementById('seats').classList.toggle('hidden',isInfo||isHome||ans.drive!=='Ja');
 document.getElementById('fruitCard').classList.toggle('hidden',isInfo);
+document.getElementById('save').textContent=isInfo?'Opslaan':'Doorgeven';
 if(!isInfo){await trLoadFruitCard()}
 go('form')
 }
@@ -269,7 +271,7 @@ if(!res.ok)throw new Error('opslaan mislukt');
 document.getElementById('routeLink').style.display=(isHome||isInfo)?'none':'';
 go('done')
 }catch(e){alert('Opslaan is niet gelukt. Controleer je internetverbinding en probeer het nogmaals.')}
-finally{btn.disabled=false;btn.textContent='Doorgeven'}
+finally{btn.disabled=false;btn.textContent=isInfo?'Opslaan':'Doorgeven'}
 }
 function badge(v){if(!v)return'<span class="badge empty">–</span>';return'<span class="badge '+(v==='Ja'?'yes':'no')+'">'+v+'</span>'}
 async function coach(){
