@@ -369,11 +369,11 @@ init();
 const trMatches=[
 {id:'a1',date:'Vrijdag 14 augustus 2026',teams:'JO14-1 · Ouders en spelers',meta:'19:00–19:30',desc:'Thijs wil graag weten wie erbij zijn.',type:'info'},
 {id:'m5',date:'Woensdag 19 augustus 2026',teams:'WFHC JO14-1 · MO12-1',meta:'Thuis · 17:15–19:45 (tijdsblok, volgens WhatsApp)',home:true},
-{id:'m6',date:'Vrijdag 21 augustus 2026',teams:'FIT JO14-2 · WFHC JO14-1',meta:'Uit · 19:30',home:false},
+{id:'m6',date:'Vrijdag 21 augustus 2026',teams:'FIT JO14-2 · WFHC JO14-1',meta:'Uit · 19:30',home:false,time:'19:30',travelMinutes:28,mapsQuery:'Vikingpad 41, Amsterdam'},
 {id:'m0',date:'ZA 29 AUGUSTUS · THUIS',teams:'WFHC JO14-1 · MO14-1',meta:'Openingsweekend WFHC · Teamfoto · shirts · Wedstrijdtijd volgt',home:true},
 {id:'m1',date:'Zaterdag 12 september 2026',teams:'WFHC JO14-1 · Terriërs/Castricum JO14-1',meta:'Thuis · tijd nog niet bekend',home:true},
-{id:'m2',date:'Zaterdag 19 september 2026',teams:'Waterland JO14-1 · WFHC JO14-1',meta:'Uit · tijd nog niet bekend',home:false},
-{id:'m3',date:'Zaterdag 26 september 2026',teams:'Heerhugowaard JO14-1 · WFHC JO14-1',meta:'Uit · tijd nog niet bekend',home:false},
+{id:'m2',date:'Zaterdag 19 september 2026',teams:'Waterland JO14-1 · WFHC JO14-1',meta:'Uit · tijd nog niet bekend',home:false,travelMinutes:31,mapsQuery:'Cornelis Dirkszoonlaan 348B, Monnickendam'},
+{id:'m3',date:'Zaterdag 26 september 2026',teams:'Heerhugowaard JO14-1 · WFHC JO14-1',meta:'Uit · tijd nog niet bekend',home:false,travelMinutes:25,mapsQuery:'De Vork 7, Heerhugowaard'},
 {id:'m4',date:'Zaterdag 3 oktober 2026',teams:'WFHC JO14-1 · Kraaien JO14-1',meta:'Thuis · tijd nog niet bekend',home:true}
 ];
 let trActiveMatch=null;
@@ -384,6 +384,27 @@ return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div
 }
 function trInfoCardShell(m){
 return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><span class="infoTag">Informatiemoment</span><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div><div class="dashSub" style="margin-top:6px">'+m.desc+'</div></div></div><div id="dash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" onclick="trOpenMatch(\''+m.id+'\')">Geef aanwezigheid door</button></div>'
+}
+function trPad2(n){return String(n).padStart(2,'0')}
+function trMinusMinutes(hhmm,mins){
+let[h,m]=hhmm.split(':').map(Number);
+let total=h*60+m-mins;
+total=((total%1440)+1440)%1440;
+return trPad2(Math.floor(total/60))+':'+trPad2(total%60)
+}
+function trOpponentName(m){
+let parts=m.teams.split('·').map(s=>s.trim());
+return parts.find(t=>!t.toUpperCase().includes('WFHC'))||parts[0]
+}
+function trTimingHtml(m){
+if(m.type==='info'||!m.time)return'';
+if(m.home){
+return '<div class="dashLine">📍 Aanwezig WFHC · '+trMinusMinutes(m.time,60)+'</div>'
+}
+if(typeof m.travelMinutes!=='number')return'';
+const departWfhc=trMinusMinutes(m.time,45+m.travelMinutes);
+const arriveOpp=trMinusMinutes(m.time,45);
+return '<div class="dashLine">🚗 Verzamelen WFHC · '+departWfhc+'</div><div class="dashLine">📍 Aanwezig '+trOpponentName(m)+' · '+arriveOpp+'</div><div class="dashSub">🗺️ Reistijd · ±'+m.travelMinutes+' min</div>'
 }
 function trResponseHtml(list){
 let total=list.length;
@@ -411,16 +432,18 @@ if(coach.present==='Ja'){return '<div class="dashLine">🟢 Coach · Thijs</div>
 if(coach.substitute){return '<div class="dashLine">🟠 Coaching · '+coach.substitute+'</div>'}
 return '<div class="dashLine">🔴 Coach afwezig</div>'
 }
-function trMapsHtml(){
-return '<a class="mapsBtn" target="_blank" href="https://www.google.com/maps/search/?api=1&query=Vikingpad+41+Amsterdam">'+trMapsIcon+' Google Maps</a>'
+function trMapsHtml(m){
+if(!m.mapsQuery)return'';
+return '<a class="mapsBtn" target="_blank" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(m.mapsQuery)+'">'+trMapsIcon+' Google Maps</a>'
 }
 function trBuildDash(m,list,fruitName,coach){
 if(m.type==='info'){return trResponseHtml(list)}
-let html=trResponseHtml(list);
+let html=trTimingHtml(m);
+html+=trResponseHtml(list);
 if(!m.home){html+=trTransportHtml(list)}
 html+=trFruitLine(fruitName);
 html+=trCoachLine(coach);
-if(!m.home){html+=trMapsHtml()}
+if(!m.home){html+=trMapsHtml(m)}
 return html
 }
 async function trLoadCard(m){
