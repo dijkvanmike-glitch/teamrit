@@ -86,6 +86,7 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 .matchDate{font-size:12px;font-weight:900;color:var(--green);text-transform:uppercase;letter-spacing:.4px}
 .matchTeams{font-size:17px;font-weight:800;margin:6px 0 2px;word-break:break-word}
 .matchMeta{color:var(--muted);font-size:13px;word-break:break-word}
+.infoTag{display:inline-block;background:var(--yellow);color:var(--navy);font-weight:900;font-size:11px;padding:4px 10px;border-radius:999px;text-transform:uppercase;letter-spacing:.4px;margin:6px 0 2px}
 .statusPill{padding:6px 12px;border-radius:999px;font-size:12px;font-weight:900;white-space:nowrap}
 .statusOpen{background:#eef1ef;color:#7d8782}
 .statusActive{background:var(--green2);color:var(--green)}
@@ -133,7 +134,8 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 <section id="form" class="screen">
 <button class="back" onclick="go('ouder')">‹</button>
 <div class="card"><div class="eyebrow">Jouw reactie</div><h3 id="hello"></h3><div id="kids" class="chips"></div></div>
-<div class="card question"><h3 id="presence"></h3><div class="opts"><button class="opt" data-k="present" data-v="Ja">Ja</button><button class="opt" data-k="present" data-v="Nee">Nee</button></div></div>
+<div class="card question" id="presenceCard"><h3 id="presence"></h3><div class="opts"><button class="opt" data-k="present" data-v="Ja">Ja</button><button class="opt" data-k="present" data-v="Nee">Nee</button></div></div>
+<div class="card question hidden" id="infoQ"><h3>Ben je erbij op 14 augustus?</h3><div class="opts" style="grid-template-columns:1fr"><button class="opt" data-k="infoAnswer" data-v="samen">Wij zijn erbij</button><button class="opt" id="infoSpelerBtn" data-k="infoAnswer" data-v="speler">Alleen … is erbij</button><button class="opt" data-k="infoAnswer" data-v="geen">Wij kunnen niet</button></div></div>
 <div class="card question" id="driveQ"><h3>Kun je rijden?</h3><div class="opts"><button class="opt" data-k="drive" data-v="Ja">Ja</button><button class="opt" data-k="drive" data-v="Nee">Nee</button></div></div>
 <div id="seats" class="card question hidden"><h3>Hoeveel teamgenoten kunnen mee?</h3><div class="opts four"><button class="opt" data-k="seats" data-v="1">1</button><button class="opt" data-k="seats" data-v="2">2</button><button class="opt" data-k="seats" data-v="3">3</button><button class="opt" data-k="seats" data-v="4+">4+</button></div></div>
 <div class="card" id="fruitCard">
@@ -166,11 +168,16 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 <section id="coach" class="screen">
 <button class="backLink" onclick="go('home')">← Mijn wedstrijden</button>
 <div class="card">
-<div class="eyebrow">Teamoverzicht</div><h3>Teamoverzicht JO14-1</h3>
-<div class="stats">
+<div class="eyebrow" id="coachEyebrow">Teamoverzicht</div><h3>Teamoverzicht JO14-1</h3>
+<div class="stats" id="stats">
 <div class="stat"><span>Gereageerd</span><strong id="r">0</strong></div>
 <div class="stat"><span>Aanwezig</span><strong id="a">0</strong></div>
 <div class="stat statDrive"><span>Rijders</span><strong id="d">0</strong></div>
+</div>
+<div class="stats hidden" id="infoStats">
+<div class="stat"><span>Spelers aanwezig</span><strong id="infoA">0</strong></div>
+<div class="stat"><span>Ouders aanwezig</span><strong id="infoB">0</strong></div>
+<div class="stat"><span>Nog niet gereageerd</span><strong id="infoC">0</strong></div>
 </div>
 </div>
 <div class="card" id="coachCard">
@@ -187,28 +194,131 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 <button id="coachSubClear" class="secondary hidden" onclick="trClearCoachSubstitute()">Vervanger verwijderen</button>
 </div>
 </div>
-<div class="card" style="overflow:auto">
+<div class="card" style="overflow:auto" id="rowsCard">
 <table><thead><tr><th>Ouder</th><th>Kind</th><th>Aanwezig</th><th class="colDrive">Rijdt</th><th class="colSeats">Plaatsen</th></tr></thead><tbody id="rows"></tbody></table>
+<div class="note">Iedereen kan dit overzicht bekijken. Reacties worden gedeeld en direct bijgewerkt voor iedereen.</div>
+</div>
+<div class="card hidden" id="infoRowsCard">
+<div id="infoRows"></div>
 <div class="note">Iedereen kan dit overzicht bekijken. Reacties worden gedeeld en direct bijgewerkt voor iedereen.</div>
 </div>
 </section>
 </div>
 
 <script>
-let parents=[];let current=null,ans={present:null,drive:null,seats:null};let fruitState=null;
+let parents=[];let current=null,ans={present:null,drive:null,seats:null,infoAnswer:null};let fruitState=null;
 function go(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');location.hash=id;if(id==='coach')coach();if(id==='home')trRenderMatches();if(id==='coachpicker')trRenderCoachPicker();scrollTo(0,0)}
 addEventListener('hashchange',()=>{let id=location.hash.slice(1);if(document.getElementById(id))go(id)})
 function render(q=''){let box=document.getElementById('list');box.innerHTML='';parents.filter(p=>(p.name+' '+p.children.join(' ')).toLowerCase().includes(q.toLowerCase())).forEach(p=>{let b=document.createElement('button');b.className='person';let initials=p.name.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();b.innerHTML='<span class="avatar">'+initials+'</span><span><strong>'+p.name+'</strong><small>'+p.children.join(' & ')+'</small></span>';b.onclick=()=>select(p);box.appendChild(b)})}
 document.getElementById('search').oninput=e=>render(e.target.value)
-async function select(p){current=p;let saved=null;try{const res=await fetch('/api/response?parent='+encodeURIComponent(p.name)+'&match='+encodeURIComponent(trActiveMatch.id));saved=await res.json()}catch(e){saved=null}const isHome=!!(trActiveMatch&&trActiveMatch.home);ans=saved?{present:saved.present,drive:saved.drive,seats:saved.seats}:{present:null,drive:null,seats:null};if(isHome){ans.drive=null;ans.seats=null}document.getElementById('hello').textContent='Hoi '+p.name.split(' ')[0]+' 👋';document.getElementById('kids').innerHTML=p.children.map(c=>'<span class="chip">🏑 '+c+'</span>').join('');document.getElementById('presence').textContent=p.children.length===1?'Is '+p.children[0].split(' ')[0]+' aanwezig?':'Zijn '+p.children.map(c=>c.split(' ')[0]).join(' en ')+' aanwezig?';document.querySelectorAll('.opt').forEach(x=>x.classList.remove('active'));for(const[k,v]of Object.entries(ans)){if(!v)continue;let e=document.querySelector('[data-k="'+k+'"][data-v="'+v+'"]');if(e)e.classList.add('active')}document.getElementById('driveQ').classList.toggle('hidden',isHome);document.getElementById('seats').classList.toggle('hidden',isHome||ans.drive!=='Ja');await trLoadFruitCard();go('form')}
+async function select(p){
+current=p;
+let saved=null;
+try{const res=await fetch('/api/response?parent='+encodeURIComponent(p.name)+'&match='+encodeURIComponent(trActiveMatch.id));saved=await res.json()}catch(e){saved=null}
+const isHome=!!(trActiveMatch&&trActiveMatch.home);
+const isInfo=!!(trActiveMatch&&trActiveMatch.type==='info');
+ans=saved?{present:saved.present,drive:saved.drive,seats:saved.seats,infoAnswer:null}:{present:null,drive:null,seats:null,infoAnswer:null};
+if(isHome){ans.drive=null;ans.seats=null}
+if(isInfo){
+if(saved&&saved.present==='Ja'&&saved.parentPresent==='Ja'){ans.infoAnswer='samen'}
+else if(saved&&saved.present==='Ja'){ans.infoAnswer='speler'}
+else if(saved&&saved.present==='Nee'){ans.infoAnswer='geen'}
+}
+document.getElementById('hello').textContent='Hoi '+p.name.split(' ')[0]+' 👋';
+document.getElementById('kids').innerHTML=p.children.map(c=>'<span class="chip">🏑 '+c+'</span>').join('');
+const childText=p.children.length===1?p.children[0].split(' ')[0]:p.children.map(c=>c.split(' ')[0]).join(' en ');
+const isAre=p.children.length===1?'is':'zijn';
+document.getElementById('presence').textContent=p.children.length===1?'Is '+childText+' aanwezig?':'Zijn '+childText+' aanwezig?';
+document.getElementById('infoSpelerBtn').textContent='Alleen '+childText+' '+isAre+' erbij';
+document.querySelectorAll('.opt').forEach(x=>x.classList.remove('active'));
+for(const[k,v]of Object.entries(ans)){if(!v)continue;let e=document.querySelector('[data-k="'+k+'"][data-v="'+v+'"]');if(e)e.classList.add('active')}
+document.getElementById('presenceCard').classList.toggle('hidden',isInfo);
+document.getElementById('infoQ').classList.toggle('hidden',!isInfo);
+document.getElementById('driveQ').classList.toggle('hidden',isInfo||isHome);
+document.getElementById('seats').classList.toggle('hidden',isInfo||isHome||ans.drive!=='Ja');
+document.getElementById('fruitCard').classList.toggle('hidden',isInfo);
+if(!isInfo){await trLoadFruitCard()}
+go('form')
+}
 document.querySelectorAll('#form .opt').forEach(b=>b.onclick=()=>{let k=b.dataset.k,v=b.dataset.v;document.querySelectorAll('[data-k="'+k+'"]').forEach(x=>x.classList.remove('active'));b.classList.add('active');ans[k]=v;if(k==='drive'){document.getElementById('seats').classList.toggle('hidden',v!=='Ja');if(v!=='Ja')ans.seats=null}})
-document.getElementById('save').onclick=async()=>{const isHome=!!(trActiveMatch&&trActiveMatch.home);if(!current||!ans.present)return alert('Beantwoord de vragen.');if(!isHome){if(!ans.drive)return alert('Beantwoord de vragen.');if(ans.drive==='Ja'&&!ans.seats)return alert('Vul het aantal plaatsen in.')}const btn=document.getElementById('save');btn.disabled=true;btn.textContent='Even opslaan...';try{const res=await fetch('/api/response',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:current.name,matchId:trActiveMatch.id,present:ans.present,drive:isHome?null:ans.drive,seats:isHome?null:ans.seats})});if(!res.ok)throw new Error('opslaan mislukt');document.getElementById('routeLink').style.display=isHome?'none':'';go('done')}catch(e){alert('Opslaan is niet gelukt. Controleer je internetverbinding en probeer het nogmaals.')}finally{btn.disabled=false;btn.textContent='Doorgeven'}}
+document.getElementById('save').onclick=async()=>{
+const isHome=!!(trActiveMatch&&trActiveMatch.home);
+const isInfo=!!(trActiveMatch&&trActiveMatch.type==='info');
+if(!current)return alert('Beantwoord de vragen.');
+let present,drive,seats,parentPresent;
+if(isInfo){
+if(!ans.infoAnswer)return alert('Beantwoord de vraag.');
+if(ans.infoAnswer==='samen'){present='Ja';parentPresent='Ja'}
+else if(ans.infoAnswer==='speler'){present='Ja';parentPresent='Nee'}
+else{present='Nee';parentPresent='Nee'}
+drive=null;seats=null
+}else{
+if(!ans.present)return alert('Beantwoord de vragen.');
+if(!isHome){
+if(!ans.drive)return alert('Beantwoord de vragen.');
+if(ans.drive==='Ja'&&!ans.seats)return alert('Vul het aantal plaatsen in.')
+}
+present=ans.present;drive=isHome?null:ans.drive;seats=isHome?null:ans.seats;parentPresent=null
+}
+const btn=document.getElementById('save');
+btn.disabled=true;
+btn.textContent='Even opslaan...';
+try{
+const res=await fetch('/api/response',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:current.name,matchId:trActiveMatch.id,present,drive,seats,parentPresent})});
+if(!res.ok)throw new Error('opslaan mislukt');
+document.getElementById('routeLink').style.display=(isHome||isInfo)?'none':'';
+go('done')
+}catch(e){alert('Opslaan is niet gelukt. Controleer je internetverbinding en probeer het nogmaals.')}
+finally{btn.disabled=false;btn.textContent='Doorgeven'}
+}
 function badge(v){if(!v)return'<span class="badge empty">–</span>';return'<span class="badge '+(v==='Ja'?'yes':'no')+'">'+v+'</span>'}
-async function coach(){const isHome=!!(trActiveMatch&&trActiveMatch.home);document.getElementById('coach').classList.toggle('hideTransport',isHome);document.querySelector('#coach h3').textContent='Teamoverzicht'+(trActiveMatch?' · '+trActiveMatch.date:' JO14-1');document.getElementById('rows').innerHTML='<tr><td colspan="5">Laden...</td></tr>';trLoadCoachControl();if(!trActiveMatch){document.getElementById('rows').innerHTML='<tr><td colspan="5">Kies eerst een wedstrijd.</td></tr>';return}let data=[];try{const res=await fetch('/api/overview?match='+encodeURIComponent(trActiveMatch.id));data=await res.json()}catch(e){document.getElementById('rows').innerHTML='<tr><td colspan="5">Kon overzicht niet laden.</td></tr>';return}let rr=0,aa=0,dd=0,out='';data.forEach(p=>{if(p.present||p.drive){rr++;if(p.present==='Ja')aa++;if(p.drive==='Ja')dd++}out+='<tr><td><strong>'+p.name+'</strong></td><td>'+p.children.join('<br>')+'</td><td>'+badge(p.present)+'</td><td class="colDrive">'+badge(p.drive)+'</td><td class="colSeats">'+(p.drive==='Ja'?(p.seats||'–'):'–')+'</td></tr>'});document.getElementById('rows').innerHTML=out;document.getElementById('r').textContent=rr;document.getElementById('a').textContent=aa;document.getElementById('d').textContent=dd}
+async function coach(){
+const isHome=!!(trActiveMatch&&trActiveMatch.home);
+const isInfo=!!(trActiveMatch&&trActiveMatch.type==='info');
+document.getElementById('coach').classList.toggle('hideTransport',isHome||isInfo);
+document.getElementById('coachCard').classList.toggle('hidden',isInfo);
+document.getElementById('stats').classList.toggle('hidden',isInfo);
+document.getElementById('infoStats').classList.toggle('hidden',!isInfo);
+document.getElementById('rowsCard').classList.toggle('hidden',isInfo);
+document.getElementById('infoRowsCard').classList.toggle('hidden',!isInfo);
+document.getElementById('coachEyebrow').textContent=isInfo?'Informatiemoment':'Teamoverzicht';
+document.querySelector('#coach h3').textContent=isInfo?('Informatiemoment · '+trActiveMatch.date):('Teamoverzicht'+(trActiveMatch?' · '+trActiveMatch.date:' JO14-1'));
+document.getElementById('rows').innerHTML='<tr><td colspan="5">Laden...</td></tr>';
+document.getElementById('infoRows').innerHTML='Laden...';
+if(!isInfo){trLoadCoachControl()}
+if(!trActiveMatch){document.getElementById('rows').innerHTML='<tr><td colspan="5">Kies eerst een wedstrijd.</td></tr>';return}
+let data=[];
+try{const res=await fetch('/api/overview?match='+encodeURIComponent(trActiveMatch.id));data=await res.json()}catch(e){document.getElementById('rows').innerHTML='<tr><td colspan="5">Kon overzicht niet laden.</td></tr>';document.getElementById('infoRows').innerHTML='Kon overzicht niet laden.';return}
+if(isInfo){
+let players=[];
+data.forEach(p=>{p.children.forEach(c=>players.push({child:c,present:p.present,parentPresent:p.parentPresent}))});
+let spelersAanwezig=players.filter(x=>x.present==='Ja').length;
+let oudersAanwezig=data.filter(p=>p.parentPresent==='Ja').length;
+let nogNiet=data.filter(p=>!p.present).length;
+document.getElementById('infoA').textContent=spelersAanwezig;
+document.getElementById('infoB').textContent=oudersAanwezig;
+document.getElementById('infoC').textContent=nogNiet;
+let out='';
+players.forEach(x=>{
+if(!x.present){out+='<div class="dashLine">'+x.child+' <span class="dashSub">nog niet gereageerd</span></div>'}
+else if(x.present==='Nee'){out+='<div class="dashLine">'+x.child+' <span class="dashSub">niet aanwezig</span></div>'}
+else{out+='<div class="dashLine">'+x.child+' <span class="dashSub">speler '+(x.present==='Ja'?'✓':'—')+'  ·  ouder '+(x.parentPresent==='Ja'?'✓':'—')+'</span></div>'}
+});
+document.getElementById('infoRows').innerHTML=out||'<div class="dashSub">Nog geen reacties.</div>';
+return
+}
+let rr=0,aa=0,dd=0,out='';
+data.forEach(p=>{if(p.present||p.drive){rr++;if(p.present==='Ja')aa++;if(p.drive==='Ja')dd++}out+='<tr><td><strong>'+p.name+'</strong></td><td>'+p.children.join('<br>')+'</td><td>'+badge(p.present)+'</td><td class="colDrive">'+badge(p.drive)+'</td><td class="colSeats">'+(p.drive==='Ja'?(p.seats||'–'):'–')+'</td></tr>'});
+document.getElementById('rows').innerHTML=out;
+document.getElementById('r').textContent=rr;
+document.getElementById('a').textContent=aa;
+document.getElementById('d').textContent=dd
+}
 async function init(){try{const res=await fetch('/api/roster');parents=await res.json()}catch(e){parents=[]}render();if(location.hash){let id=location.hash.slice(1);if(document.getElementById(id))go(id)}}
 init();
 
 const trMatches=[
+{id:'a1',date:'Vrijdag 14 augustus 2026',teams:'JO14-1 · Ouders en spelers',meta:'19:00–19:30',desc:'Thijs wil graag weten wie erbij zijn.',type:'info'},
 {id:'m5',date:'Woensdag 19 augustus 2026',teams:'WFHC JO14-1 · MO12-1',meta:'Thuis · 17:15–19:45 (tijdsblok, volgens WhatsApp)',home:true},
 {id:'m0',date:'ZA 29 AUGUSTUS · THUIS',teams:'WFHC JO14-1 · MO14-1',meta:'Openingsweekend WFHC · Teamfoto · shirts · Wedstrijdtijd volgt',home:true},
 {id:'m1',date:'Zaterdag 12 september 2026',teams:'WFHC JO14-1 · Terriërs/Castricum JO14-1',meta:'Thuis · tijd nog niet bekend',home:true},
@@ -219,7 +329,11 @@ const trMatches=[
 let trActiveMatch=null;
 const trMapsIcon='<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#EA4335" d="M12 2C7.58 2 4 5.58 4 10c0 5.25 7 11.5 7.3 11.76a1 1 0 0 0 1.4 0C13 21.5 20 15.25 20 10c0-4.42-3.58-8-8-8z"/><circle cx="12" cy="10" r="3.2" fill="#fff"/></svg>';
 function trCardShell(m){
+if(m.type==='info'){return trInfoCardShell(m)}
 return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div></div></div><div id="dash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" onclick="trOpenMatch(\''+m.id+'\')">Organiseren</button></div>'
+}
+function trInfoCardShell(m){
+return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><span class="infoTag">Informatiemoment</span><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div><div class="dashSub" style="margin-top:6px">'+m.desc+'</div></div></div><div id="dash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" onclick="trOpenMatch(\''+m.id+'\')">Geef aanwezigheid door</button></div>'
 }
 function trResponseHtml(list){
 let total=list.length;
@@ -251,6 +365,7 @@ function trMapsHtml(){
 return '<a class="mapsBtn" target="_blank" href="https://www.google.com/maps/search/?api=1&query=Vikingpad+41+Amsterdam">'+trMapsIcon+' Google Maps</a>'
 }
 function trBuildDash(m,list,fruitName,coach){
+if(m.type==='info'){return trResponseHtml(list)}
 let html=trResponseHtml(list);
 if(!m.home){html+=trTransportHtml(list)}
 html+=trFruitLine(fruitName);
@@ -383,6 +498,7 @@ await fetch('/api/coach',{method:'POST',headers:{'content-type':'application/jso
 }catch(e){alert('Verwijderen is niet gelukt. Probeer het nogmaals.')}
 }
 function trCoachCardShell(m){
+if(m.type==='info'){return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><span class="infoTag">Informatiemoment</span><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div></div></div><button class="organizeBtn" onclick="trOpenCoachMatch(\''+m.id+'\')">Bekijk overzicht</button></div>'}
 return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div></div></div><div id="coachdash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" onclick="trOpenCoachMatch(\''+m.id+'\')">Coachstatus beheren</button></div>'
 }
 function trCoachPickerLine(coach){
@@ -403,7 +519,7 @@ if(el)el.innerHTML='<div class="dashSub">Kon status niet laden.</div>'
 function trRenderCoachPicker(){
 let box=document.getElementById('coachMatchList');
 box.innerHTML=trMatches.map(m=>trCoachCardShell(m)).join('');
-trMatches.forEach(m=>trLoadCoachPickerCard(m))
+trMatches.forEach(m=>{if(m.type!=='info'){trLoadCoachPickerCard(m)}})
 }
 function trOpenCoachMatch(id){
 trActiveMatch=trMatches.find(m=>m.id===id);
