@@ -139,6 +139,7 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 
 <section id="form" class="screen">
 <button class="back" onclick="go('ouder')">‹</button>
+<div id="formContext"></div>
 <div class="card"><div class="eyebrow">Jouw reactie</div><h3 id="hello"></h3><div id="kids" class="chips"></div></div>
 <div class="card tip" id="familyTip">
 <div class="tipTitle">💡 Eén reactie per kind is genoeg</div>
@@ -266,6 +267,7 @@ trRenderFormMode(isHome,isInfo)
 async function select(p){
 current=p;
 try{localStorage.setItem('lastSelectedParent',p.name);trLastParentChildren=p.children}catch(e){}
+document.getElementById('formContext').innerHTML=trMatchContextHtml(trActiveMatch);
 let saved=null;
 try{const res=await fetch('/api/response?parent='+encodeURIComponent(p.name)+'&match='+encodeURIComponent(trActiveMatch.id));saved=await res.json()}catch(e){saved=null}
 const isHome=!!(trActiveMatch&&trActiveMatch.home);
@@ -386,10 +388,10 @@ let trOverviewCache={};
 const trMapsIcon='<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#EA4335" d="M12 2C7.58 2 4 5.58 4 10c0 5.25 7 11.5 7.3 11.76a1 1 0 0 0 1.4 0C13 21.5 20 15.25 20 10c0-4.42-3.58-8-8-8z"/><circle cx="12" cy="10" r="3.2" fill="#fff"/></svg>';
 function trCardShell(m){
 if(m.type==='info'){return trInfoCardShell(m)}
-return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div></div></div><div id="dash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" onclick="trOpenMatch(\''+m.id+'\')">Geef door</button></div>'
+return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div></div></div><div id="dash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" id="cta-'+m.id+'" onclick="trOpenMatch(\''+m.id+'\')">Geef door</button></div>'
 }
 function trInfoCardShell(m){
-return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><span class="infoTag">Informatiemoment</span><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div><div class="dashSub" style="margin-top:6px">'+m.desc+'</div></div></div><div id="dash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" onclick="trOpenMatch(\''+m.id+'\')">Geef door</button></div>'
+return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><span class="infoTag">Informatiemoment</span><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div><div class="dashSub" style="margin-top:6px">'+m.desc+'</div></div></div><div id="dash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" id="cta-'+m.id+'" onclick="trOpenMatch(\''+m.id+'\')">Geef door</button></div>'
 }
 function trPad2(n){return String(n).padStart(2,'0')}
 function trMinusMinutes(hhmm,mins){
@@ -449,6 +451,29 @@ function trMapsHtml(m){
 if(!m.mapsQuery)return'';
 return '<a class="mapsBtn" target="_blank" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(m.mapsQuery)+'">'+trMapsIcon+' Google Maps</a>'
 }
+function trMatchContextHtml(m){
+if(!m)return'';
+if(m.type==='info'){
+return '<div class="card"><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div></div>'
+}
+const label=m.home?'THUIS':'UIT';
+const dateClean=m.date.replace(/\s*·\s*(THUIS|UIT)\s*$/i,'');
+let head='<div class="matchDate">'+dateClean+' · '+label+'</div><div class="matchTeams">'+m.teams+'</div>';
+let body;
+if(m.time){
+body='<div class="dashLine">🏑 Wedstrijd · '+m.time+'</div>';
+if(m.home){
+body+='<div class="dashLine">📍 Aanwezig WFHC · '+trMinusMinutes(m.time,60)+'</div>'
+}else if(typeof m.travelMinutes==='number'){
+const departWfhc=trFloorTo5(trMinusMinutes(m.time,45+m.travelMinutes));
+const arriveOpp=trMinusMinutes(m.time,45);
+body+='<div class="dashLine">🚗 Verzamelen WFHC · '+departWfhc+'</div><div class="dashLine">📍 Aanwezig '+trOpponentName(m)+' · '+arriveOpp+'</div>'
+}
+}else{
+body='<div class="dashSub">Tijd volgt</div>'
+}
+return '<div class="card">'+head+'<div class="dashBlock">'+body+'</div></div>'
+}
 function trSameChildSet(a,b){
 if(!a||!b||a.length!==b.length)return false;
 return [...a].sort().join('|')===[...b].sort().join('|')
@@ -456,15 +481,23 @@ return [...a].sort().join('|')===[...b].sort().join('|')
 function trFirstNames(children){
 return children.length===1?children[0].split(' ')[0]:children.map(c=>c.split(' ')[0]).join(' en ')
 }
+function trFindMine(list){
+if(!trLastParentChildren||!trLastParentChildren.length)return null;
+return list.find(p=>trSameChildSet(p.children,trLastParentChildren))||null
+}
 function trSelfStatusHtml(list){
 if(!trLastParentChildren||!trLastParentChildren.length)return'';
-const mine=list.find(p=>trSameChildSet(p.children,trLastParentChildren));
+const mine=trFindMine(list);
 if(!mine)return'';
 const childText=trFirstNames(trLastParentChildren);
 if(mine.present){
 return '<div class="dashSelf dashSelfDone">✓ Voor '+childText+' doorgegeven</div>'
 }
 return '<div class="dashSelf dashSelfTodo">○ Voor '+childText+' nog doorgeven</div>'
+}
+function trCtaLabel(list){
+const mine=trFindMine(list);
+return (mine&&mine.present)?'Wijzig reactie':'Geef door'
 }
 function trBuildDash(m,list,fruitName,coach){
 const selfHtml=trSelfStatusHtml(list);
@@ -489,7 +522,9 @@ fetch('/api/coach?match='+encodeURIComponent(m.id)).then(r=>r.json())
 const list=Array.isArray(ov)?ov:[];
 const fruitName=fr&&fr.parentName?fr.parentName:null;
 trOverviewCache[m.id]={list,fruitName,coach:co};
-if(el)el.innerHTML=trBuildDash(m,list,fruitName,co)
+if(el)el.innerHTML=trBuildDash(m,list,fruitName,co);
+const ctaBtn=document.getElementById('cta-'+m.id);
+if(ctaBtn)ctaBtn.textContent=trCtaLabel(list)
 }catch(e){
 if(el)el.innerHTML='<div class="dashSub">Kon status niet laden.</div>'
 }
@@ -516,6 +551,8 @@ trMatches.forEach(m=>{
 const cached=trOverviewCache[m.id];
 const el=document.getElementById('dash-'+m.id);
 if(cached&&el){el.innerHTML=trBuildDash(m,cached.list,cached.fruitName,cached.coach)}
+const ctaBtn=document.getElementById('cta-'+m.id);
+if(cached&&ctaBtn){ctaBtn.textContent=trCtaLabel(cached.list)}
 })
 }
 async function trLoadFruitCard(){
