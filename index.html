@@ -373,14 +373,14 @@ async function init(){try{const res=await fetch('/api/roster');parents=await res
 init();
 
 const trMatches=[
-{id:'a1',date:'Vrijdag 14 augustus 2026',teams:'JO14-1 · Ouders en spelers',meta:'19:00–19:30',desc:'Thijs wil graag weten wie erbij zijn.',type:'info'},
-{id:'m5',date:'Woensdag 19 augustus 2026',teams:'WFHC JO14-1 · MO12-1',meta:'Thuis · 17:15–19:45 (tijdsblok, volgens WhatsApp)',home:true},
-{id:'m6',date:'Vrijdag 21 augustus 2026',teams:'FIT JO14-2 · WFHC JO14-1',meta:'Uit · 19:30',home:false,time:'19:30',travelMinutes:28,mapsQuery:'Vikingpad 41, Amsterdam'},
-{id:'m0',date:'ZA 29 AUGUSTUS · THUIS',teams:'WFHC JO14-1 · MO14-1',meta:'Openingsweekend WFHC · Teamfoto · shirts · Wedstrijdtijd volgt',home:true},
-{id:'m1',date:'Zaterdag 12 september 2026',teams:'WFHC JO14-1 · Terriërs/Castricum JO14-1',meta:'Thuis · tijd nog niet bekend',home:true},
-{id:'m2',date:'Zaterdag 19 september 2026',teams:'Waterland JO14-1 · WFHC JO14-1',meta:'Uit · tijd nog niet bekend',home:false,travelMinutes:31,mapsQuery:'Cornelis Dirkszoonlaan 348B, Monnickendam'},
-{id:'m3',date:'Zaterdag 26 september 2026',teams:'Heerhugowaard JO14-1 · WFHC JO14-1',meta:'Uit · tijd nog niet bekend',home:false,travelMinutes:25,mapsQuery:'De Vork 7, Heerhugowaard'},
-{id:'m4',date:'Zaterdag 3 oktober 2026',teams:'WFHC JO14-1 · Kraaien JO14-1',meta:'Thuis · tijd nog niet bekend',home:true}
+{id:'a1',isoDate:'2026-08-14',date:'Vrijdag 14 augustus 2026',teams:'JO14-1 · Ouders en spelers',meta:'19:00–19:30',desc:'Thijs wil graag weten wie erbij zijn.',type:'info'},
+{id:'m5',isoDate:'2026-08-19',date:'Woensdag 19 augustus 2026',teams:'WFHC JO14-1 · MO12-1',meta:'Thuis · 17:15–19:45 (tijdsblok, volgens WhatsApp)',home:true},
+{id:'m6',isoDate:'2026-08-21',date:'Vrijdag 21 augustus 2026',teams:'FIT JO14-2 · WFHC JO14-1',meta:'Uit · 19:30',home:false,time:'19:30',travelMinutes:28,mapsQuery:'Vikingpad 41, Amsterdam'},
+{id:'m0',isoDate:'2026-08-29',date:'ZA 29 AUGUSTUS · THUIS',teams:'WFHC JO14-1 · MO14-1',meta:'Openingsweekend WFHC · Teamfoto · shirts · Wedstrijdtijd volgt',home:true},
+{id:'m1',isoDate:'2026-09-12',date:'Zaterdag 12 september 2026',teams:'WFHC JO14-1 · Terriërs/Castricum JO14-1',meta:'Thuis · tijd nog niet bekend',home:true},
+{id:'m2',isoDate:'2026-09-19',date:'Zaterdag 19 september 2026',teams:'Waterland JO14-1 · WFHC JO14-1',meta:'Uit · tijd nog niet bekend',home:false,travelMinutes:31,mapsQuery:'Cornelis Dirkszoonlaan 348B, Monnickendam'},
+{id:'m3',isoDate:'2026-09-26',date:'Zaterdag 26 september 2026',teams:'Heerhugowaard JO14-1 · WFHC JO14-1',meta:'Uit · tijd nog niet bekend',home:false,travelMinutes:25,mapsQuery:'De Vork 7, Heerhugowaard'},
+{id:'m4',isoDate:'2026-10-03',date:'Zaterdag 3 oktober 2026',teams:'WFHC JO14-1 · Kraaien JO14-1',meta:'Thuis · tijd nog niet bekend',home:true}
 ];
 let trActiveMatch=null;
 let trLastParentChildren=null;
@@ -529,10 +529,30 @@ if(ctaBtn)ctaBtn.textContent=trCtaLabel(list)
 if(el)el.innerHTML='<div class="dashSub">Kon status niet laden.</div>'
 }
 }
+function trTodayISO(){
+try{
+const p=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Amsterdam',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+const g=t=>{const x=p.find(v=>v.type===t);return x?x.value:''};
+const y=g('year'),mo=g('month'),d=g('day');
+if(y&&mo&&d)return y+'-'+mo+'-'+d
+}catch(e){}
+const n=new Date();
+return n.getFullYear()+'-'+trPad2(n.getMonth()+1)+'-'+trPad2(n.getDate())
+}
+function trIsCurrentOrFuture(m){
+if(!m||typeof m.isoDate!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(m.isoDate))return true;
+return m.isoDate>=trTodayISO()
+}
+function trActiveMatches(){return trMatches.filter(trIsCurrentOrFuture)}
 function trRenderMatches(){
 let box=document.getElementById('matchList');
-box.innerHTML=trMatches.map(m=>trCardShell(m)).join('');
-trMatches.forEach(m=>trLoadCard(m))
+const actief=trActiveMatches();
+if(!actief.length){
+box.innerHTML='<div class="matchCard"><div class="matchTeams">Geen activiteiten gepland</div><div class="dashSub" style="margin-top:8px">Zodra er een nieuwe wedstrijd of bijeenkomst is, zie je die hier.</div></div>';
+return
+}
+box.innerHTML=actief.map(m=>trCardShell(m)).join('');
+actief.forEach(m=>trLoadCard(m))
 }
 function trOpenMatch(id){
 trActiveMatch=trMatches.find(m=>m.id===id);
