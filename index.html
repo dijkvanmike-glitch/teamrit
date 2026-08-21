@@ -376,11 +376,11 @@ const trMatches=[
 {id:'a1',isoDate:'2026-08-14',date:'Vrijdag 14 augustus 2026',teams:'JO14-1 · Ouders en spelers',meta:'19:00–19:30',desc:'Thijs wil graag weten wie erbij zijn.',type:'info'},
 {id:'m5',isoDate:'2026-08-19',date:'Woensdag 19 augustus 2026',teams:'WFHC JO14-1 · MO12-1',meta:'Thuis · 18:15 · Uit-tenue: zwart-wit',home:true,time:'18:15'},
 {id:'m6',isoDate:'2026-08-21',date:'Vrijdag 21 augustus 2026',teams:'FIT JO14-2 · WFHC JO14-1',meta:'Uit · 19:30',home:false,time:'19:30',travelMinutes:28,mapsQuery:'Vikingpad 41, Amsterdam'},
-{id:'m0',isoDate:'2026-08-29',date:'ZA 29 AUGUSTUS · THUIS',teams:'WFHC JO14-1 · MO14-1',meta:'Openingsweekend WFHC · Teamfoto · shirts · Wedstrijdtijd volgt',home:true},
-{id:'m1',isoDate:'2026-09-12',date:'Zaterdag 12 september 2026',teams:'WFHC JO14-1 · Terriërs/Castricum JO14-1',meta:'Thuis · tijd nog niet bekend',home:true},
-{id:'m2',isoDate:'2026-09-19',date:'Zaterdag 19 september 2026',teams:'Waterland JO14-1 · WFHC JO14-1',meta:'Uit · tijd nog niet bekend',home:false,travelMinutes:31,mapsQuery:'Cornelis Dirkszoonlaan 348B, Monnickendam'},
-{id:'m3',isoDate:'2026-09-26',date:'Zaterdag 26 september 2026',teams:'Heerhugowaard JO14-1 · WFHC JO14-1',meta:'Uit · tijd nog niet bekend',home:false,travelMinutes:25,mapsQuery:'De Vork 7, Heerhugowaard'},
-{id:'m4',isoDate:'2026-10-03',date:'Zaterdag 3 oktober 2026',teams:'WFHC JO14-1 · Kraaien JO14-1',meta:'Thuis · tijd nog niet bekend',home:true}
+{id:'m0',isoDate:'2026-08-29',date:'ZA 29 AUGUSTUS · THUIS',teams:'WFHC JO14-1 · MO14-1',meta:'Openingsweekend WFHC · Teamfoto · shirts · Wedstrijdtijd volgt',home:true},{id:'m7',isoDate:'2026-09-05',date:'Zaterdag 5 september 2026',teams:'K.H.C. Strawberries JO14-1 · WFHC JO14-1',meta:'Uit · 12:15 · Sportpark Schoonenberg, Veld 1',home:false,time:'12:15',travelMinutes:70,mapsQuery:'Waterloolaan 1, 1985 EP Driehuis'},
+{id:'m1',isoDate:'2026-09-12',date:'Zaterdag 12 september 2026',teams:'WFHC JO14-1 · Terriërs/Castricum JO14-1',meta:'Thuis · 09:15 · Veld 2 · Kunstgras water',home:true,time:'09:15'},
+{id:'m2',isoDate:'2026-09-19',date:'Zaterdag 19 september 2026',teams:'Waterland JO14-1 · WFHC JO14-1',meta:'Uit · Tijd volgt · Veld nog niet bekend · Uitshirt, uitbroek en uitsokken meenemen',home:false,travelMinutes:31,mapsQuery:'Cornelis Dirkszoonlaan 348, 1141 XS Monnickendam'},
+{id:'m3',isoDate:'2026-09-26',date:'Zaterdag 26 september 2026',teams:'Heerhugowaard JO14-1 · WFHC JO14-1',meta:'Uit · 10:30 · Veld 1',home:false,travelMinutes:25,mapsQuery:'De Vork 7, 1704 BX Heerhugowaard',time:'10:30',departOverride:'09:00'},
+{id:'m4',isoDate:'2026-10-03',date:'Zaterdag 3 oktober 2026',teams:'WFHC JO14-1 · Kraaien JO14-1',meta:'Thuis · 09:15 · Veld 1 · Kunstgras water',home:true,time:'09:15'}
 ];
 let trActiveMatch=null;
 let trLastParentChildren=null;
@@ -417,7 +417,7 @@ if(m.home){
 return '<div class="dashLine">📍 Aanwezig WFHC · '+trMinusMinutes(m.time,60)+'</div>'
 }
 if(typeof m.travelMinutes!=='number')return'';
-const departWfhc=trFloorTo5(trMinusMinutes(m.time,45+m.travelMinutes));
+const departWfhc=m.departOverride||trFloorTo5(trMinusMinutes(m.time,45+m.travelMinutes));
 const arriveOpp=trMinusMinutes(m.time,45);
 return '<div class="dashLine">🚗 Verzamelen WFHC · '+departWfhc+'</div><div class="dashLine">📍 Aanwezig '+trOpponentName(m)+' · '+arriveOpp+'</div><div class="dashSub">🗺️ Reistijd · ±'+m.travelMinutes+' min</div>'
 }
@@ -444,7 +444,7 @@ return '<div class="dashLine">🍎 Fruit · '+fruitName+'</div>'
 function trCoachLine(coach){
 if(!coach||!coach.present){return ''}
 if(coach.present==='Ja'){return '<div class="dashLine">🟢 Coach · Thijs</div>'}
-if(coach.substitute){return '<div class="dashLine">🟠 Coaching · '+coach.substitute+'</div>'}
+if(coach.substitute){return '<div class="dashLine">🟢 Coaching geregeld · '+coach.substitute+'</div>'}
 return '<div class="dashLine">🔴 Coach afwezig</div>'
 }
 function trMapsHtml(m){
@@ -465,7 +465,7 @@ body='<div class="dashLine">🏑 Wedstrijd · '+m.time+'</div>';
 if(m.home){
 body+='<div class="dashLine">📍 Aanwezig WFHC · '+trMinusMinutes(m.time,60)+'</div>'
 }else if(typeof m.travelMinutes==='number'){
-const departWfhc=trFloorTo5(trMinusMinutes(m.time,45+m.travelMinutes));
+const departWfhc=m.departOverride||trFloorTo5(trMinusMinutes(m.time,45+m.travelMinutes));
 const arriveOpp=trMinusMinutes(m.time,45);
 body+='<div class="dashLine">🚗 Verzamelen WFHC · '+departWfhc+'</div><div class="dashLine">📍 Aanwezig '+trOpponentName(m)+' · '+arriveOpp+'</div>'
 }
