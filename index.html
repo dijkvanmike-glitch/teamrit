@@ -378,7 +378,7 @@ const trMatches=[
 {id:'m6',isoDate:'2026-08-21',date:'Vrijdag 21 augustus 2026',teams:'FIT JO14-2 · WFHC JO14-1',meta:'Uit · 19:30',home:false,time:'19:30',travelMinutes:28,mapsQuery:'Vikingpad 41, Amsterdam'},
 {id:'m0',isoDate:'2026-08-29',date:'ZA 29 AUGUSTUS · THUIS',teams:'WFHC JO14-1 · MO14-1',meta:'Openingsweekend WFHC · Teamfoto · shirts · Wedstrijdtijd volgt',home:true},{id:'m7',isoDate:'2026-09-05',date:'Zaterdag 5 september 2026',teams:'K.H.C. Strawberries JO14-1 · WFHC JO14-1',meta:'Uit · 12:15 · Sportpark Schoonenberg, Veld 1',home:false,time:'12:15',travelMinutes:50,mapsQuery:'Waterloolaan 1, 1985 EP Driehuis',departOverride:'10:20'},
 {id:'m1',isoDate:'2026-09-12',date:'Zaterdag 12 september 2026',teams:'WFHC JO14-1 · Terriërs/Castricum JO14-1',meta:'Thuis · 09:15 · Veld 2 · Kunstgras water',home:true,time:'09:15'},
-{id:'m2',isoDate:'2026-09-19',date:'Zaterdag 19 september 2026',teams:'Waterland JO14-1 · WFHC JO14-1',meta:'Uit · 14:00 · Sportpark Markgouw, Veld 1 · Uitshirt, uitbroek en uitsokken meenemen',home:false,time:'14:00',travelMinutes:31,mapsQuery:'Cornelis Dirkszoonlaan 348, 1141 XS Monnickendam',departOverride:'12:20'},
+{id:'m2',isoDate:'2026-09-19',date:'Zaterdag 19 september 2026',teams:'Waterland JO14-1 · WFHC JO14-1',meta:'Uit · 14:00 · Sportpark Markgouw, Veld 1 · Uitshirt, uitbroek en uitsokken meenemen',home:false,time:'14:00',travelMinutes:31,mapsQuery:'Cornelis Dirkszoonlaan 348, 1141 XS Monnickendam',departOverride:'12:20',selectedDriverKeys:['Mattijs S.','Lucas V.','Menno S.','Mees B.']},
 {id:'m3',isoDate:'2026-09-26',date:'Zaterdag 26 september 2026',teams:'Heerhugowaard JO14-1 · WFHC JO14-1',meta:'Uit · 10:30 · Veld 1',home:false,travelMinutes:25,mapsQuery:'De Vork 7, 1704 BX Heerhugowaard',time:'10:30',departOverride:'09:00'},
 {id:'m4',isoDate:'2026-10-03',date:'Zaterdag 3 oktober 2026',teams:'WFHC JO14-1 · Kraaien JO14-1',meta:'Thuis · 09:15 · Veld 1 · Kunstgras water',home:true,time:'09:15'}
 ];
@@ -427,9 +427,17 @@ let responded=list.filter(p=>p.present||p.drive).length;
 let present=list.filter(p=>p.present==='Ja').length;
 return '<div class="stats" style="grid-template-columns:repeat(2,1fr)"><div class="stat"><span>Gereageerd</span><strong>'+responded+' van '+total+'</strong></div><div class="stat"><span>Aanwezig</span><strong>'+present+'</strong></div></div>'
 }
-function trTransportHtml(list){
+function trTransportHtml(list,m){
 let drivers=list.filter(p=>p.drive==='Ja');
 let n=drivers.length;
+if(m&&Array.isArray(m.selectedDriverKeys)){
+let selected=m.selectedDriverKeys.map(key=>drivers.find(p=>p.familyKey===key)).filter(Boolean);
+let reserves=drivers.filter(p=>!m.selectedDriverKeys.includes(p.familyKey));
+let statusHtml=selected.length===m.selectedDriverKeys.length?'<div class="dashLine">🟢 Vervoer geregeld · '+selected.length+' auto\'s ingedeeld</div>':'<div class="dashLine">🟠 Vervoer · '+selected.length+' van '+m.selectedDriverKeys.length+' auto\'s ingedeeld</div>';
+let selectedHtml=selected.length?'<div class="dashSub">Rijden: '+selected.map(p=>p.name).join(' · ')+'</div>':'<div class="dashSub">Nog geen chauffeurs ingedeeld</div>';
+let reserveHtml=reserves.length?'<div class="dashSub">Reserve: '+reserves.map(p=>p.name).join(' · ')+'</div>':'';
+return statusHtml+selectedHtml+reserveHtml+'<div class="dashSub">Verdeling op basis van eerdere rij-aanmeldingen</div>'
+}
 let statusHtml;
 if(n<4){statusHtml='<div class="dashLine">🟠 Vervoer · '+n+' van 4 auto\'s</div>'}
 else if(n===4){statusHtml='<div class="dashLine">🟢 Vervoer geregeld · 4 van 4 auto\'s</div>'}
@@ -505,7 +513,7 @@ if(m.type==='info'){return selfHtml+trResponseHtml(list)}
 let html=selfHtml;
 html+=trTimingHtml(m);
 html+=trResponseHtml(list);
-if(!m.home){html+=trTransportHtml(list)}
+if(!m.home){html+=trTransportHtml(list,m)}
 html+=trFruitLine(fruitName);
 html+=trCoachLine(coach);
 if(!m.home){html+=trMapsHtml(m)}
