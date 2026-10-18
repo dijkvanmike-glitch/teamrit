@@ -426,17 +426,20 @@ function trOpponentName(m){
 let parts=m.teams.split('·').map(s=>s.trim());
 return parts.find(t=>!t.toUpperCase().includes('WFHC'))||parts[0]
 }
+function trAwayTimingHtml(m,showTravel=false){
+const departWfhc=m.departOverride||(m.time&&typeof m.travelMinutes==='number'?trFloorTo5(trMinusMinutes(m.time,45+m.travelMinutes)):null);
+let html='<div class="dashLine">🚗 Verzamelen bij WFHC · '+(departWfhc||'Tijd volgt')+'</div>';
+html+='<div class="dashLine">📍 Aanwezig bij '+trOpponentName(m)+' · '+(m.time?trMinusMinutes(m.time,45):'Tijd volgt')+'</div>';
+html+='<div class="dashLine">🏑 Wedstrijd · '+(m.time||'Tijd volgt')+'</div>';
+if(showTravel&&typeof m.travelMinutes==='number')html+='<div class="dashSub">🗺️ Reistijd · ±'+m.travelMinutes+' min</div>';
+return html
+}
 function trTimingHtml(m){
 if(m.type==='info')return'';
-if(m.departOverride&&(m.home||!m.time||typeof m.travelMinutes!=='number'))return '<div class="dashLine">'+(m.home?'📍':'🚗')+' Verzamelen WFHC · '+m.departOverride+'</div>';
+if(!m.home)return trAwayTimingHtml(m,true);
+if(m.departOverride)return '<div class="dashLine">📍 Verzamelen WFHC · '+m.departOverride+'</div>';
 if(!m.time)return '<div class="dashLine">🕒 Verzameltijd volgt</div>';
-if(m.home){
 return '<div class="dashLine">📍 Verzamelen WFHC · '+trMinusMinutes(m.time,60)+'</div>'
-}
-if(typeof m.travelMinutes!=='number')return '<div class="dashLine">🕒 Verzameltijd volgt</div>';
-const departWfhc=m.departOverride||trFloorTo5(trMinusMinutes(m.time,45+m.travelMinutes));
-const arriveOpp=trMinusMinutes(m.time,45);
-return '<div class="dashLine">🚗 Verzamelen WFHC · '+departWfhc+'</div><div class="dashLine">📍 Aanwezig '+trOpponentName(m)+' · '+arriveOpp+'</div><div class="dashSub">🗺️ Reistijd · ±'+m.travelMinutes+' min</div>'
 }
 function trResponseHtml(list){
 let total=list.length;
@@ -472,7 +475,9 @@ const label=m.home?'THUIS':'UIT';
 const dateClean=m.date.replace(/\s*·\s*(THUIS|UIT)\s*$/i,'');
 let head='<div class="matchDate">'+dateClean+' · '+label+'</div><div class="matchTeams">'+m.teams+'</div>';
 let body;
-if(m.time){
+if(!m.home){
+body=trAwayTimingHtml(m);
+}else if(m.time){
 body='<div class="dashLine">🏑 Wedstrijd · '+m.time+'</div>';
 if(m.departOverride&&(m.home||typeof m.travelMinutes!=='number')){
 body+='<div class="dashLine">'+(m.home?'📍':'🚗')+' Verzamelen WFHC · '+m.departOverride+'</div>'
