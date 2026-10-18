@@ -1,22 +1,61 @@
 import { editableFields, validateFields, displayMatch } from '/lib/matches.mjs';
+import { gatheringTime, routeKey } from '/lib/timing.mjs';
 const $ = id => document.getElementById(id);
 let code = '', matches = [], active = null, dirty = false, busy = false;
 const fields = ['isoDate','home','opponent','time','gathering','location','note'];
 function status(message, success = false) { $('status').textContent = message; $('status').className = success ? 'success' : ''; }
-function read() { return Object.fromEntries(fields.map(key => [key,key==='home'?$('home').value==='true':$(key).value])); }
+let route = null, routeRequest = null, routeVersion = 0, timingTimer, ongoingCalculation;
+function startCalculation(){ongoingCalculation=calculateRoute();return ongoingCalculation;}
+function read() {
+  const data=Object.fromEntries(fields.map(key => [key,key==='home'?$('home').value==='true':$(key).value]));
+  data.gatheringMode=$('gatheringMode').value;
+  if(route && routeKey(route.location)===routeKey(data.location)) Object.assign(data,{travelMinutes:route.travelMinutes,travelLocation:route.location});
+  return data;
+}
+function cancelRoute(){clearTimeout(timingTimer);routeVersion++;routeRequest?.abort();routeRequest=null;}
+function timingLocal(){
+  const data=read(), auto=data.gatheringMode==='auto';
+  $('gathering').readOnly=auto;
+  if(!auto){$('timingStatus').textContent='Handmatige verzameltijd. Deze afspraak gaat voor.';$('retryTiming').hidden=true;return;}
+  $('gathering').value='';$('retryTiming').hidden=true;
+  if(!data.time){$('timingStatus').textContent='Vul de wedstrijdtijd in om de verzameltijd te berekenen.';return;}
+  if(!data.home&&!data.location.trim()){$('timingStatus').textContent='Vul het adres in: straat, huisnummer en plaats.';return;}
+  if(!data.home&&data.travelMinutes===undefined){$('timingStatus').textContent='Autorijtijd nog berekenen…';return;}
+  try{$('gathering').value=gatheringTime(data.time,data.home,data.travelMinutes);$('timingStatus').textContent=data.home?'Automatisch: één uur voor de wedstrijd bij WFHC.':'Automatisch: '+data.travelMinutes+' min rijden → verzamelen '+$('gathering').value+' bij WFHC. Geschatte reistijd zonder files.';}
+  catch(err){$('timingStatus').textContent=err.message;}
+}
+async function calculateRoute(){
+  cancelRoute();timingLocal();const data=read();
+  if(data.gatheringMode!=='auto'||data.home||!data.time||!data.location.trim()||data.travelMinutes!==undefined){preview();return;}
+  const version=routeVersion;const controller=new AbortController();routeRequest=controller;
+  $('timingStatus').textContent='Autorijtijd berekenen…';
+  try{
+    const res=await fetch('/api/admin/timing',{method:'POST',headers:{'content-type':'application/json',Authorization:'Bearer '+code},body:JSON.stringify({location:data.location}),signal:controller.signal});
+    const result=await res.json().catch(()=>({}));
+    if(!res.ok)throw Error(result.error||(res.status===429?'Wacht even en probeer opnieuw.':'Autorijtijd berekenen mislukt. Probeer opnieuw of kies handmatig.'));
+    if(version!==routeVersion)return;
+    route={location:data.location,travelMinutes:result.travelMinutes};timingLocal();preview();
+  }catch(err){if(version===routeVersion&&err.name!=='AbortError'){$('gathering').value='';$('timingStatus').textContent=err.message;$('retryTiming').hidden=false;}}
+  finally{if(version===routeVersion)routeRequest=null;}
+}
 function preview() {
   const data = read();
-  try { const m = displayMatch(validateFields(data)); $('preview').textContent = m.date+'\n'+m.teams+'\n'+m.meta; }
+  try { const m = displayMatch(validateFields({...data,gatheringMode:'manual'})); $('preview').textContent = m.date+'\n'+m.teams+'\n'+m.meta; }
   catch { $('preview').textContent = 'Vul de datum en tegenstander in om de voorvertoning te zien.'; }
 }
 function discard() { return !dirty || confirm('Je hebt nog niet opgeslagen. Wil je deze invoer verlaten?'); }
 function edit(match) {
+  cancelRoute();route=null;
   active = match || { id:'match-'+crypto.randomUUID(), revision:0 };
   const data = match ? editableFields(match) : { isoDate:'',home:true,opponent:'',time:'',gathering:'',location:'',note:'' };
   for (const key of fields) $(key).value = String(data[key]);
+  $('gatheringMode').value=match?.gatheringMode || (data.gathering?'manual':'auto');
+  if(match?.gatheringMode==='auto'&&Number.isInteger(match.travelMinutes)&&routeKey(match.travelLocation||'')===routeKey(data.location))route={location:data.location,travelMinutes:match.travelMinutes};
+  timingLocal();
   $('pick').value = match?.id || '';
   $('formTitle').textContent = match ? 'Wedstrijd wijzigen' : 'Nieuwe wedstrijd';
   $('editor').hidden = false; dirty = false; preview();
+  if($('gatheringMode').value==='auto')startCalculation();
 }
 async function load() {
   const res = await fetch('/api/matches', { cache:'no-store' });
@@ -49,11 +88,26 @@ $('pick').onchange = () => {
   const match = matches.find(m=>m.id===selected);
   if (match) { edit(match); status('Wijzig de gegevens en sla op.'); } else { $('editor').hidden=true; dirty=false; }
 };
-$('editor').oninput = () => { dirty=true; preview(); };
+$('editor').oninput = e => {
+  dirty=true;
+  if(['time','home','location','gatheringMode'].includes(e.target.id)){
+    cancelRoute();if(e.target.id==='location')route=null;
+    timingLocal();
+    if(e.target.id==='gatheringMode'&&$('gatheringMode').value==='manual')$('gathering').focus();
+    else timingTimer=setTimeout(startCalculation,1200);
+  }
+  preview();
+};
+$('retryTiming').onclick=()=>{route=null;startCalculation();};
 $('editor').onsubmit = async e => {
   e.preventDefault();
   if (busy) return;
+  const pending=read();
+  if(pending.gatheringMode==='auto'&&!pending.home&&pending.time&&pending.location.trim()&&pending.travelMinutes===undefined){
+    controls(true);try{if(routeRequest)await ongoingCalculation;else await startCalculation();}finally{controls(false);}
+  }
   let data; try { data=validateFields(read()); } catch (err) { status(err.message); return; }
+  cancelRoute();
   controls(true); status('Wedstrijd opslaan…');
   try {
     const res = await fetch('/api/admin/matches', { method:'PUT',headers:{ 'content-type':'application/json', Authorization:'Bearer '+code },body:JSON.stringify({ id:active.id,revision:active.revision,data }) });
@@ -70,5 +124,5 @@ $('reloadMatch').onclick = async () => {
   try { await load(); const m=matches.find(m=>m.id===id); if(m) edit(m); else { $('editor').hidden=true; dirty=false; } status('Actueel programma geladen.',true); }
   catch (err) { status(err.message); } finally { controls(false); }
 };
-$('logout').onclick = () => { if(discard()) { code='';active=null;dirty=false;$('editor').reset();$('editor').hidden=true;$('workspace').hidden=true;$('login').hidden=false;status('Beheer afgesloten.'); } };
+$('logout').onclick = () => { if(discard()) { cancelRoute();route=null;code='';active=null;dirty=false;$('editor').reset();$('editor').hidden=true;$('workspace').hidden=true;$('login').hidden=false;status('Beheer afgesloten.'); } };
 addEventListener('beforeunload',e=>{ if(dirty || busy){ e.preventDefault();e.returnValue=''; } });

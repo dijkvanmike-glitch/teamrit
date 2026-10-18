@@ -97,5 +97,6 @@ test('timing shows gathering without start time/travel and preserves existing tr
   assert.match(vm.runInContext('trTimingHtml(m)',context),/09:55/);
   assert.match(vm.runInContext('trMatchContextHtml(m)',context),/09:55/);
   context.m={...m,time:undefined};assert.match(vm.runInContext('trMatchContextHtml(m)',context),/Tijd volgt/);assert.match(vm.runInContext('trMatchContextHtml(m)',context),/09:55/);
+  context.m=seed.find(m=>m.id==='m9');assert.match(vm.runInContext('trTimingHtml(m)',context),/Verzameltijd volgt/);assert.match(vm.runInContext('trMatchContextHtml(m)',context),/Verzameltijd volgt/);assert.match(vm.runInContext('trCoachCardShell(m)',context),/Verzameltijd volgt/);
   context.m=seed.find(m=>m.id==='m2');assert.match(vm.runInContext('trTimingHtml(m)',context),/Reistijd/);
 });

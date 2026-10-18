@@ -42,3 +42,13 @@ Node 24: `node --test tests/matches.test.mjs`.
 De tests controleren de afgesproken wedstrijden, validatie, HTML-escaping, auth, conflicten, dubbele retries, seedbehoud, vaste IDs, storingsgedrag en verzameltijden zonder reistijdberekening. De bestaande reactiefuncties worden niet gewijzigd. De geautomatiseerde reactietest bewijst dat de wedstrijd-API uitsluitend `matches` aanroept; productiebehoud moet aanvullend met een voor/na-vergelijking worden gecontroleerd.
 
 Voor geïsoleerd testen in de browser: `node tests/serve.mjs`, open `http://localhost:8766/admin.html`, code `local-test-only-code-12345`. Dit is uitsluitend een lokale testcode. De server gebruikt tijdelijke data in geheugen en maakt geen verbinding met Supabase. Stop de server na de test.
+
+## Automatische verzameltijd
+
+Nieuwe wedstrijden gebruiken standaard **Automatisch berekenen**. Thuis: één uur voor de wedstrijd. Uit: wedstrijdtijd min 45 minuten en de naar boven afgeronde autorijtijd; vervolgens verzameltijd naar beneden afronden op vijf minuten. Vertrekpunt is WFHC, Roskam 6, Zwaag. Vul een Nederlands adres in met straat, huisnummer en plaats; veldinformatie hoort bij Notitie.
+
+PDOK controleert het adres; OSRM/FOSSGIS berekent de autoroute op OpenStreetMap-data. De schatting houdt geen rekening met actuele of voorspelde files. De dienst is geschikt voor het lage volume van deze pilot, heeft geen beschikbaarheidsgarantie en begrenst routes tot één aanvraag per seconde voor de hele site. Er is geen extra account of sleutel nodig. Bij storingen of een onduidelijk adres blijft automatische opslag geblokkeerd totdat de route is berekend, of je kiest **Handmatig instellen**. Lege wedstrijdtijd/adres geeft **Verzameltijd volgt**. Alleen het clubadres en routecoördinaten gaan naar de externe diensten; geen oudergegevens of beheercode.
+
+Een bestaande expliciete verzameltijd blijft handmatig; kies zelf Automatisch berekenen om die om te zetten. Een automatische tijd wordt opnieuw berekend als wedstrijdtijd, thuis/uit of adres verandert. Herladen gebruikt de opgeslagen schatting. De server berekent de verzameltijd opnieuw uit tijd en reistijd; handmatig ingestelde afspraken blijven voorgaan. Dit verandert geen wedstrijd-ID of ouderreactie.
+
+Alle controles: `node --test tests/*.test.mjs`.
