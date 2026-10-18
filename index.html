@@ -425,11 +425,11 @@ return parts.find(t=>!t.toUpperCase().includes('WFHC'))||parts[0]
 function trTimingHtml(m){
 if(m.type==='info')return'';
 if(m.departOverride&&(m.home||!m.time||typeof m.travelMinutes!=='number'))return '<div class="dashLine">'+(m.home?'📍':'🚗')+' Verzamelen WFHC · '+m.departOverride+'</div>';
-if(!m.time)return'';
+if(!m.time)return '<div class="dashLine">🕒 Verzameltijd volgt</div>';
 if(m.home){
-return '<div class="dashLine">📍 Aanwezig WFHC · '+trMinusMinutes(m.time,60)+'</div>'
+return '<div class="dashLine">📍 Verzamelen WFHC · '+trMinusMinutes(m.time,60)+'</div>'
 }
-if(typeof m.travelMinutes!=='number')return'';
+if(typeof m.travelMinutes!=='number')return '<div class="dashLine">🕒 Verzameltijd volgt</div>';
 const departWfhc=m.departOverride||trFloorTo5(trMinusMinutes(m.time,45+m.travelMinutes));
 const arriveOpp=trMinusMinutes(m.time,45);
 return '<div class="dashLine">🚗 Verzamelen WFHC · '+departWfhc+'</div><div class="dashLine">📍 Aanwezig '+trOpponentName(m)+' · '+arriveOpp+'</div><div class="dashSub">🗺️ Reistijd · ±'+m.travelMinutes+' min</div>'
@@ -486,14 +486,16 @@ body='<div class="dashLine">🏑 Wedstrijd · '+m.time+'</div>';
 if(m.departOverride&&(m.home||typeof m.travelMinutes!=='number')){
 body+='<div class="dashLine">'+(m.home?'📍':'🚗')+' Verzamelen WFHC · '+m.departOverride+'</div>'
 }else if(m.home){
-body+='<div class="dashLine">📍 Aanwezig WFHC · '+trMinusMinutes(m.time,60)+'</div>'
+body+='<div class="dashLine">📍 Verzamelen WFHC · '+trMinusMinutes(m.time,60)+'</div>'
 }else if(typeof m.travelMinutes==='number'){
 const departWfhc=m.departOverride||trFloorTo5(trMinusMinutes(m.time,45+m.travelMinutes));
 const arriveOpp=trMinusMinutes(m.time,45);
 body+='<div class="dashLine">🚗 Verzamelen WFHC · '+departWfhc+'</div><div class="dashLine">📍 Aanwezig '+trOpponentName(m)+' · '+arriveOpp+'</div>'
-}
+}else{body+='<div class="dashLine">🕒 Verzameltijd volgt</div>'}
+
 }else{
 body='<div class="dashSub">Tijd volgt</div>';
+if(!m.departOverride)body+='<div class="dashLine">🕒 Verzameltijd volgt</div>';
 if(m.departOverride)body+='<div class="dashLine">Verzamelen WFHC · '+m.departOverride+'</div>'
 }
 return '<div class="card">'+head+'<div class="dashBlock">'+body+'</div></div>'
@@ -701,7 +703,7 @@ await fetch('/api/coach',{method:'POST',headers:{'content-type':'application/jso
 }
 function trCoachCardShell(m){
 if(m.type==='info'){return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><span class="infoTag">Informatiemoment</span><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div></div></div><button class="organizeBtn" onclick="trOpenCoachMatch(\''+m.id+'\')">Bekijk overzicht</button></div>'}
-return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div></div></div><div id="coachdash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" onclick="trOpenCoachMatch(\''+m.id+'\')">Coachstatus beheren</button></div>'
+return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div></div></div><div class="dashBlock">'+trTimingHtml(m)+'</div><div id="coachdash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" onclick="trOpenCoachMatch(\''+m.id+'\')">Coachstatus beheren</button></div>'
 }
 function trCoachPickerLine(coach){
 if(coach&&coach.present==='Ja'){return '<div class="dashLine">🟢 Coach aanwezig · Thijs</div>'}
