@@ -401,9 +401,13 @@ let trActiveMatch=null;
 let trLastParentChildren=null;
 let trOverviewCache={};
 const trMapsIcon='<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#EA4335" d="M12 2C7.58 2 4 5.58 4 10c0 5.25 7 11.5 7.3 11.76a1 1 0 0 0 1.4 0C13 21.5 20 15.25 20 10c0-4.42-3.58-8-8-8z"/><circle cx="12" cy="10" r="3.2" fill="#fff"/></svg>';
+function trCardMeta(m){
+if(m.home||m.type==='info')return m.meta;
+return m.meta.split('·').map(part=>part.trim()).filter(part=>part!==m.time&&part!=='Tijd volgt'&&part!=='Verzameltijd volgt'&&!part.startsWith('Verzamelen ')).join(' · ')
+}
 function trCardShell(m){
 if(m.type==='info'){return trInfoCardShell(m)}
-return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div></div></div><div id="dash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" id="cta-'+m.id+'" onclick="trOpenMatch(\''+m.id+'\')">Geef door</button></div>'
+return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+trCardMeta(m)+'</div></div></div><div id="dash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" id="cta-'+m.id+'" onclick="trOpenMatch(\''+m.id+'\')">Geef door</button></div>'
 }
 function trInfoCardShell(m){
 return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><span class="infoTag">Informatiemoment</span><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div><div class="dashSub" style="margin-top:6px">'+m.desc+'</div></div></div><div id="dash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" id="cta-'+m.id+'" onclick="trOpenMatch(\''+m.id+'\')">Geef door</button></div>'
@@ -699,7 +703,7 @@ await fetch('/api/coach',{method:'POST',headers:{'content-type':'application/jso
 }
 function trCoachCardShell(m){
 if(m.type==='info'){return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><span class="infoTag">Informatiemoment</span><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div></div></div><button class="organizeBtn" onclick="trOpenCoachMatch(\''+m.id+'\')">Bekijk overzicht</button></div>'}
-return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div></div></div><div class="dashBlock">'+trTimingHtml(m)+'</div><div id="coachdash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" onclick="trOpenCoachMatch(\''+m.id+'\')">Coachstatus beheren</button></div>'
+return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+trCardMeta(m)+'</div></div></div><div class="dashBlock">'+trTimingHtml(m)+'</div><div id="coachdash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" onclick="trOpenCoachMatch(\''+m.id+'\')">Coachstatus beheren</button></div>'
 }
 function trCoachPickerLine(coach){
 if(coach&&coach.present==='Ja'){return '<div class="dashLine">🟢 Coach aanwezig · Thijs</div>'}
