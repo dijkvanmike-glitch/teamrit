@@ -402,7 +402,7 @@ let trLastParentChildren=null;
 let trOverviewCache={};
 const trMapsIcon='<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#EA4335" d="M12 2C7.58 2 4 5.58 4 10c0 5.25 7 11.5 7.3 11.76a1 1 0 0 0 1.4 0C13 21.5 20 15.25 20 10c0-4.42-3.58-8-8-8z"/><circle cx="12" cy="10" r="3.2" fill="#fff"/></svg>';
 function trCardMeta(m){
-if(m.home||m.type==='info')return m.meta;
+if(m.type==='info')return m.meta;
 return m.meta.split('·').map(part=>part.trim()).filter(part=>part!==m.time&&part!=='Tijd volgt'&&part!=='Verzameltijd volgt'&&!part.startsWith('Verzamelen ')).join(' · ')
 }
 function trCardShell(m){
@@ -441,9 +441,8 @@ return html
 function trTimingHtml(m){
 if(m.type==='info')return'';
 if(!m.home)return trAwayTimingHtml(m,true);
-if(m.departOverride)return '<div class="dashLine">📍 Verzamelen WFHC · '+m.departOverride+'</div>';
-if(!m.time)return '<div class="dashLine">🕒 Verzameltijd volgt</div>';
-return '<div class="dashLine">📍 Verzamelen WFHC · '+trMinusMinutes(m.time,60)+'</div>'
+const gathering=m.departOverride||(m.time?trMinusMinutes(m.time,60):null);
+return '<div class="dashLine">📍 '+(gathering?'Verzamelen WFHC · '+gathering:'Verzameltijd volgt')+'</div><div class="dashLine">🏑 Wedstrijd · '+(m.time||'Tijd volgt')+'</div>'
 }
 function trResponseHtml(list){
 let total=list.length;
