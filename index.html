@@ -124,6 +124,7 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 <div style="color:var(--muted)">Kies een wedstrijd om te organiseren.</div>
 <button class="coachLink" onclick="go('coachpicker')">Voor Thijs (coach) → Coachoverzicht</button>
 </div>
+<p id="scheduleNotice" role="status" hidden style="padding:12px;background:#fff3d6;border-radius:10px"></p>
 <div id="matchList" class="matchList"></div>
 <div class="footer">Geen app nodig · gewoon via de WhatsApp-link</div>
 </section>
@@ -369,24 +370,29 @@ document.getElementById('r').textContent=rr;
 document.getElementById('a').textContent=aa;
 document.getElementById('d').textContent=dd
 }
-async function init(){try{const res=await fetch('/api/roster');parents=await res.json()}catch(e){parents=[]}render();trLoadLastParent();trRefreshSelfStatus();if(location.hash){let id=location.hash.slice(1);if(document.getElementById(id))go(id)}}
+async function init(){try{await trLoadSchedule()}catch(e){document.getElementById('scheduleNotice').hidden=false;document.getElementById('scheduleNotice').textContent='Programma laden is niet gelukt. Vernieuw de pagina om opnieuw te proberen.'}try{const res=await fetch('/api/roster');parents=await res.json()}catch(e){parents=[]}render();trLoadLastParent();trRefreshSelfStatus();if(location.hash){let id=location.hash.slice(1);if(document.getElementById(id))go(id)}}
 init();
 
-const trMatches=[
-{id:'a1',isoDate:'2026-08-14',date:'Vrijdag 14 augustus 2026',teams:'JO14-1 · Ouders en spelers',meta:'19:00–19:30',desc:'Thijs wil graag weten wie erbij zijn.',type:'info'},
-{id:'m5',isoDate:'2026-08-19',date:'Woensdag 19 augustus 2026',teams:'WFHC JO14-1 · MO12-1',meta:'Thuis · 18:15 · Uit-tenue: zwart-wit',home:true,time:'18:15'},
-{id:'m6',isoDate:'2026-08-21',date:'Vrijdag 21 augustus 2026',teams:'FIT JO14-2 · WFHC JO14-1',meta:'Uit · 19:30',home:false,time:'19:30',travelMinutes:28,mapsQuery:'Vikingpad 41, Amsterdam'},
-{id:'m0',isoDate:'2026-08-29',date:'ZA 29 AUGUSTUS · THUIS',teams:'WFHC JO14-1 · MO14-1',meta:'Openingsweekend WFHC · Teamfoto · shirts · Wedstrijdtijd volgt',home:true},{id:'m7',isoDate:'2026-09-05',date:'Zaterdag 5 september 2026',teams:'K.H.C. Strawberries JO14-1 · WFHC JO14-1',meta:'Uit · 12:15 · Sportpark Schoonenberg, Veld 1',home:false,time:'12:15',travelMinutes:50,mapsQuery:'Waterloolaan 1, 1985 EP Driehuis',departOverride:'10:20'},
-{id:'m1',isoDate:'2026-09-12',date:'Zaterdag 12 september 2026',teams:'WFHC JO14-1 · Terriërs/Castricum JO14-1',meta:'Thuis · 09:15 · Veld 2 · Kunstgras water',home:true,time:'09:15'},
-{id:'m2',isoDate:'2026-09-19',date:'Zaterdag 19 september 2026',teams:'Waterland JO14-1 · WFHC JO14-1',meta:'Uit · 14:00 · Sportpark Markgouw, Veld 1 · Uitshirt, uitbroek en uitsokken meenemen',home:false,time:'14:00',travelMinutes:31,mapsQuery:'Cornelis Dirkszoonlaan 348, 1141 XS Monnickendam',departOverride:'12:20',selectedDriverKeys:['Mattijs S.','Lucas V.','Menno S.','Mees B.']},
-{id:'m3',isoDate:'2026-09-26',date:'Zaterdag 26 september 2026',teams:'Heerhugowaard JO14-1 · WFHC JO14-1',meta:'Uit · 10:30 · Veld 1',home:false,travelMinutes:25,mapsQuery:'De Vork 7, 1704 BX Heerhugowaard',time:'10:30',departOverride:'09:00'},
-{id:'m4',isoDate:'2026-10-03',date:'Zaterdag 3 oktober 2026',teams:'WFHC JO14-1 · Kraaien JO14-1',meta:'Thuis · 09:15 · Veld 1 · Kunstgras water',home:true,time:'09:15'},
-{"id": "m8", "isoDate": "2026-10-24", "date": "Zaterdag 24 oktober 2026", "teams": "Alkmaar JO14-2 · WFHC JO14-1", "meta": "Uit · Tijd volgt · Olympiaweg 12 Alkmaar", "home": false, "mapsQuery": "Olympiaweg 12 Alkmaar"},
-{"id": "m9", "isoDate": "2026-10-31", "date": "Zaterdag 31 oktober 2026", "teams": "WFHC JO14-1 · AMHC FIT JO14-2", "meta": "Thuis · Tijd volgt", "home": true},
-{"id": "m10", "isoDate": "2026-11-07", "date": "Zaterdag 7 november 2026", "teams": "Magnus JO14-1 · WFHC JO14-1", "meta": "Uit · Tijd volgt · Wilgenlaan 1 Schagen", "home": false, "mapsQuery": "Wilgenlaan 1 Schagen"},
-{"id": "m11", "isoDate": "2026-11-14", "date": "Zaterdag 14 november 2026", "teams": "WFHC JO14-1 · Terriërs/Castricum JO14-1", "meta": "Thuis · Tijd volgt", "home": true},
-{"id": "m12", "isoDate": "2026-11-21", "date": "Zaterdag 21 november 2026", "teams": "BHC Overbos JO14-1 · WFHC JO14-1", "meta": "Uit · 11:45 · Verzamelen 09:55 · Van Loenenlaan 3 Beverwijk", "home": false, "time": "11:45", "departOverride": "09:55", "mapsQuery": "Van Loenenlaan 3 Beverwijk"}
-];
+const trMatches=[];
+async function trLoadSchedule(){
+let data;
+const notice=document.getElementById('scheduleNotice');
+try{
+const res=await fetch('/api/matches',{cache:'no-store'});
+if(!res.ok)throw Error();
+data=await res.json();
+}catch(e){
+const res=await fetch('/matches-seed.json',{cache:'no-store'});
+if(!res.ok)throw Error('Programma niet beschikbaar');
+data=await res.json();
+notice.textContent='Het actuele programma kon niet worden geladen. Je ziet het oorspronkelijke programma; latere wijzigingen kunnen ontbreken. Vernieuw de pagina om opnieuw te proberen.';
+notice.hidden=false;
+}
+const {safeDisplayMatch}=await import('/lib/matches.mjs');
+trMatches.splice(0,trMatches.length,...data.map(safeDisplayMatch).sort((a,b)=>a.isoDate.localeCompare(b.isoDate)));
+trRenderMatches();
+}
+
 let trActiveMatch=null;
 let trLastParentChildren=null;
 let trOverviewCache={};
@@ -417,7 +423,9 @@ let parts=m.teams.split('·').map(s=>s.trim());
 return parts.find(t=>!t.toUpperCase().includes('WFHC'))||parts[0]
 }
 function trTimingHtml(m){
-if(m.type==='info'||!m.time)return'';
+if(m.type==='info')return'';
+if(m.departOverride&&(m.home||!m.time||typeof m.travelMinutes!=='number'))return '<div class="dashLine">'+(m.home?'📍':'🚗')+' Verzamelen WFHC · '+m.departOverride+'</div>';
+if(!m.time)return'';
 if(m.home){
 return '<div class="dashLine">📍 Aanwezig WFHC · '+trMinusMinutes(m.time,60)+'</div>'
 }
@@ -475,7 +483,9 @@ let head='<div class="matchDate">'+dateClean+' · '+label+'</div><div class="mat
 let body;
 if(m.time){
 body='<div class="dashLine">🏑 Wedstrijd · '+m.time+'</div>';
-if(m.home){
+if(m.departOverride&&(m.home||typeof m.travelMinutes!=='number')){
+body+='<div class="dashLine">'+(m.home?'📍':'🚗')+' Verzamelen WFHC · '+m.departOverride+'</div>'
+}else if(m.home){
 body+='<div class="dashLine">📍 Aanwezig WFHC · '+trMinusMinutes(m.time,60)+'</div>'
 }else if(typeof m.travelMinutes==='number'){
 const departWfhc=m.departOverride||trFloorTo5(trMinusMinutes(m.time,45+m.travelMinutes));
@@ -483,7 +493,8 @@ const arriveOpp=trMinusMinutes(m.time,45);
 body+='<div class="dashLine">🚗 Verzamelen WFHC · '+departWfhc+'</div><div class="dashLine">📍 Aanwezig '+trOpponentName(m)+' · '+arriveOpp+'</div>'
 }
 }else{
-body='<div class="dashSub">Tijd volgt</div>'
+body='<div class="dashSub">Tijd volgt</div>';
+if(m.departOverride)body+='<div class="dashLine">Verzamelen WFHC · '+m.departOverride+'</div>'
 }
 return '<div class="card">'+head+'<div class="dashBlock">'+body+'</div></div>'
 }
@@ -716,6 +727,5 @@ function trOpenCoachMatch(id){
 trActiveMatch=trMatches.find(m=>m.id===id);
 go('coach')
 }
-trRenderMatches();
 </script>
 </body></html>

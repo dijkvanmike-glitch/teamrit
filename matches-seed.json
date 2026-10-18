@@ -1,0 +1,145 @@
+[
+  {
+    "id": "a1",
+    "isoDate": "2026-08-14",
+    "date": "Vrijdag 14 augustus 2026",
+    "teams": "JO14-1 · Ouders en spelers",
+    "meta": "19:00–19:30",
+    "desc": "Thijs wil graag weten wie erbij zijn.",
+    "type": "info"
+  },
+  {
+    "id": "m5",
+    "isoDate": "2026-08-19",
+    "date": "Woensdag 19 augustus 2026",
+    "teams": "WFHC JO14-1 · MO12-1",
+    "meta": "Thuis · 18:15 · Uit-tenue: zwart-wit",
+    "home": true,
+    "time": "18:15"
+  },
+  {
+    "id": "m6",
+    "isoDate": "2026-08-21",
+    "date": "Vrijdag 21 augustus 2026",
+    "teams": "FIT JO14-2 · WFHC JO14-1",
+    "meta": "Uit · 19:30",
+    "home": false,
+    "time": "19:30",
+    "travelMinutes": 28,
+    "mapsQuery": "Vikingpad 41, Amsterdam"
+  },
+  {
+    "id": "m0",
+    "isoDate": "2026-08-29",
+    "date": "ZA 29 AUGUSTUS · THUIS",
+    "teams": "WFHC JO14-1 · MO14-1",
+    "meta": "Openingsweekend WFHC · Teamfoto · shirts · Wedstrijdtijd volgt",
+    "home": true
+  },
+  {
+    "id": "m7",
+    "isoDate": "2026-09-05",
+    "date": "Zaterdag 5 september 2026",
+    "teams": "K.H.C. Strawberries JO14-1 · WFHC JO14-1",
+    "meta": "Uit · 12:15 · Sportpark Schoonenberg, Veld 1",
+    "home": false,
+    "time": "12:15",
+    "travelMinutes": 50,
+    "mapsQuery": "Waterloolaan 1, 1985 EP Driehuis",
+    "departOverride": "10:20"
+  },
+  {
+    "id": "m1",
+    "isoDate": "2026-09-12",
+    "date": "Zaterdag 12 september 2026",
+    "teams": "WFHC JO14-1 · Terriërs/Castricum JO14-1",
+    "meta": "Thuis · 09:15 · Veld 2 · Kunstgras water",
+    "home": true,
+    "time": "09:15"
+  },
+  {
+    "id": "m2",
+    "isoDate": "2026-09-19",
+    "date": "Zaterdag 19 september 2026",
+    "teams": "Waterland JO14-1 · WFHC JO14-1",
+    "meta": "Uit · 14:00 · Sportpark Markgouw, Veld 1 · Uitshirt, uitbroek en uitsokken meenemen",
+    "home": false,
+    "time": "14:00",
+    "travelMinutes": 31,
+    "mapsQuery": "Cornelis Dirkszoonlaan 348, 1141 XS Monnickendam",
+    "departOverride": "12:20",
+    "selectedDriverKeys": [
+      "Mattijs S.",
+      "Lucas V.",
+      "Menno S.",
+      "Mees B."
+    ]
+  },
+  {
+    "id": "m3",
+    "isoDate": "2026-09-26",
+    "date": "Zaterdag 26 september 2026",
+    "teams": "Heerhugowaard JO14-1 · WFHC JO14-1",
+    "meta": "Uit · 10:30 · Veld 1",
+    "home": false,
+    "travelMinutes": 25,
+    "mapsQuery": "De Vork 7, 1704 BX Heerhugowaard",
+    "time": "10:30",
+    "departOverride": "09:00"
+  },
+  {
+    "id": "m4",
+    "isoDate": "2026-10-03",
+    "date": "Zaterdag 3 oktober 2026",
+    "teams": "WFHC JO14-1 · Kraaien JO14-1",
+    "meta": "Thuis · 09:15 · Veld 1 · Kunstgras water",
+    "home": true,
+    "time": "09:15"
+  },
+  {
+    "id": "m8",
+    "isoDate": "2026-10-24",
+    "date": "Zaterdag 24 oktober 2026",
+    "teams": "Alkmaar JO14-2 · WFHC JO14-1",
+    "meta": "Uit · 14:25 · Veld 2 · Olympiaweg 12 Alkmaar",
+    "home": false,
+    "mapsQuery": "Olympiaweg 12 Alkmaar",
+    "time": "14:25"
+  },
+  {
+    "id": "m9",
+    "isoDate": "2026-10-31",
+    "date": "Zaterdag 31 oktober 2026",
+    "teams": "WFHC JO14-1 · AMHC FIT JO14-2",
+    "meta": "Thuis · Tijd volgt",
+    "home": true
+  },
+  {
+    "id": "m10",
+    "isoDate": "2026-11-07",
+    "date": "Zaterdag 7 november 2026",
+    "teams": "Magnus JO14-1 · WFHC JO14-1",
+    "meta": "Uit · Tijd volgt · Wilgenlaan 1 Schagen",
+    "home": false,
+    "mapsQuery": "Wilgenlaan 1 Schagen"
+  },
+  {
+    "id": "m11",
+    "isoDate": "2026-11-14",
+    "date": "Zaterdag 14 november 2026",
+    "teams": "WFHC JO14-1 · Terriërs/Castricum JO14-1",
+    "meta": "Thuis · Tijd volgt",
+    "home": true
+  },
+  {
+    "id": "m12",
+    "isoDate": "2026-11-21",
+    "date": "Zaterdag 21 november 2026",
+    "teams": "BHC Overbos JO14-1 · WFHC JO14-1",
+    "meta": "Uit · 11:45 · Verzamelen 09:55 · Van Loenenlaan 3 Beverwijk",
+    "home": false,
+    "time": "11:45",
+    "departOverride": "09:55",
+    "mapsQuery": "Van Loenenlaan 3 Beverwijk"
+  }
+]
