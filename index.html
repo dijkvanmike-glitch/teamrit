@@ -214,7 +214,8 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 </div>
 </div>
 <div class="card" style="overflow:auto" id="rowsCard">
-<table><thead><tr><th>Ouder(s)</th><th>Kind</th><th>Aanwezig</th><th class="colDrive">Rijdt</th><th class="colSeats">Plaatsen</th></tr></thead><tbody id="rows"></tbody></table>
+<div id="transportOverview" style="margin-bottom:16px"></div>
+<table><thead><tr><th>Ouder(s)</th><th>Kind</th><th>Aanwezig</th><th class="colDrive">Kan rijden</th><th class="colSeats">Plaatsen</th></tr></thead><tbody id="rows"></tbody></table>
 <div class="note">Iedereen kan dit overzicht bekijken. Reacties worden gedeeld en direct bijgewerkt voor iedereen. Eén reactie per speler telt, ook als beide ouders gekoppeld zijn.</div>
 </div>
 <div class="card hidden" id="infoRowsCard">
@@ -339,6 +340,7 @@ document.getElementById('rowsCard').classList.toggle('hidden',isInfo);
 document.getElementById('infoRowsCard').classList.toggle('hidden',!isInfo);
 document.getElementById('coachEyebrow').textContent=isInfo?'Informatiemoment':'Teamoverzicht';
 document.querySelector('#coach h3').textContent=isInfo?('Informatiemoment · '+trActiveMatch.date):('Teamoverzicht'+(trActiveMatch?' · '+trActiveMatch.date:' JO14-1'));
+document.getElementById('transportOverview').innerHTML='';
 document.getElementById('rows').innerHTML='<tr><td colspan="5">Laden...</td></tr>';
 document.getElementById('infoRows').innerHTML='Laden...';
 if(!isInfo){trLoadCoachControl()}
@@ -363,6 +365,7 @@ else{out+='<div class="dashLine">'+x.child+' <span class="dashSub">speler '+(x.p
 document.getElementById('infoRows').innerHTML=out||'<div class="dashSub">Nog geen reacties.</div>';
 return
 }
+document.getElementById('transportOverview').innerHTML=trActiveMatch.home?'':trTransportHtml(data,trActiveMatch);
 let rr=0,aa=0,dd=0,out='';
 data.forEach(p=>{if(p.present||p.drive){rr++;if(p.present==='Ja')aa++;if(p.drive==='Ja')dd++}out+='<tr><td><strong>'+p.name+'</strong></td><td>'+p.children.join('<br>')+'</td><td>'+badge(p.present)+'</td><td class="colDrive">'+badge(p.drive)+'</td><td class="colSeats">'+(p.drive==='Ja'?(p.seats||'–'):'–')+'</td></tr>'});
 document.getElementById('rows').innerHTML=out;
@@ -388,7 +391,8 @@ data=await res.json();
 notice.textContent='Het actuele programma kon niet worden geladen. Je ziet het oorspronkelijke programma; latere wijzigingen kunnen ontbreken. Vernieuw de pagina om opnieuw te proberen.';
 notice.hidden=false;
 }
-const {safeDisplayMatch}=await import('/lib/matches.mjs');
+const [{safeDisplayMatch},{transportHtml}]=await Promise.all([import('/lib/matches.mjs'),import('/lib/transport.mjs')]);
+trTransportRenderer=transportHtml;
 trMatches.splice(0,trMatches.length,...data.map(safeDisplayMatch).sort((a,b)=>a.isoDate.localeCompare(b.isoDate)));
 trRenderMatches();
 }
@@ -440,23 +444,10 @@ let responded=list.filter(p=>p.present||p.drive).length;
 let present=list.filter(p=>p.present==='Ja').length;
 return '<div class="stats" style="grid-template-columns:repeat(2,1fr)"><div class="stat"><span>Gereageerd</span><strong>'+responded+' van '+total+'</strong></div><div class="stat"><span>Aanwezig</span><strong>'+present+'</strong></div></div>'
 }
+let trTransportRenderer=null;
 function trTransportHtml(list,m){
-let drivers=list.filter(p=>p.drive==='Ja');
-let n=drivers.length;
-if(m&&Array.isArray(m.selectedDriverKeys)){
-let selected=m.selectedDriverKeys.map(key=>drivers.find(p=>p.familyKey===key)).filter(Boolean);
-let reserves=drivers.filter(p=>!m.selectedDriverKeys.includes(p.familyKey));
-let statusHtml=selected.length===m.selectedDriverKeys.length?'<div class="dashLine">🟢 Vervoer geregeld · '+selected.length+' auto\'s ingedeeld</div>':'<div class="dashLine">🟠 Vervoer · '+selected.length+' van '+m.selectedDriverKeys.length+' auto\'s ingedeeld</div>';
-let selectedHtml=selected.length?'<div class="dashSub">Rijden: '+selected.map(p=>p.name).join(' · ')+'</div>':'<div class="dashSub">Nog geen chauffeurs ingedeeld</div>';
-let reserveHtml=reserves.length?'<div class="dashSub">Reserve: '+reserves.map(p=>p.name).join(' · ')+'</div>':'';
-return statusHtml+selectedHtml+reserveHtml+'<div class="dashSub">Verdeling op basis van eerdere rij-aanmeldingen</div>'
-}
-let statusHtml;
-if(n<4){statusHtml='<div class="dashLine">🟠 Vervoer · '+n+' van 4 auto\'s</div>'}
-else if(n===4){statusHtml='<div class="dashLine">🟢 Vervoer geregeld · 4 van 4 auto\'s</div>'}
-else{statusHtml='<div class="dashLine">🟢 Vervoer geregeld · '+n+' auto\'s beschikbaar</div>'}
-let namesHtml=n>0?'<div class="dashSub">Rijden: '+drivers.map(p=>p.name).join(' · ')+'</div>':'<div class="dashSub">Nog geen chauffeurs aangemeld</div>';
-return statusHtml+namesHtml
+if(trTransportRenderer)return trTransportRenderer(list,m);
+return '<div class="dashSub">Rij-indeling wordt geladen…</div>'
 }
 function trFruitLine(fruitName){
 if(!fruitName){return ''}

@@ -52,3 +52,9 @@ PDOK controleert het adres; OSRM/FOSSGIS berekent de autoroute op OpenStreetMap-
 Een bestaande expliciete verzameltijd blijft handmatig; kies zelf Automatisch berekenen om die om te zetten. Een automatische tijd wordt opnieuw berekend als wedstrijdtijd, thuis/uit of adres verandert. Herladen gebruikt de opgeslagen schatting. De server berekent de verzameltijd opnieuw uit tijd en reistijd; handmatig ingestelde afspraken blijven voorgaan. Dit verandert geen wedstrijd-ID of ouderreactie.
 
 Alle controles: `node --test tests/*.test.mjs`.
+
+## Rijders en reserves
+
+Bij meer dan vier rij-aanmeldingen voor een uitwedstrijd kiest TeamRit vier gezinnen met de minste eerdere rij-opgaven bij uitwedstrijden vóór die wedstrijddatum. Bij gelijk aantal gaat de oudste laatste rij-opgave voor, daarna sorteert TeamRit op een vaste gezinscode. Twee gekoppelde ouders tellen als één gezin. Alleen wie nu **Ja** opgeeft, is kandidaat. Overige aangemelde ouders staan met naam als **Reserve** op de wedstrijdkaart en in het teamoverzicht. Tot en met vier aanmeldingen rijdt iedereen die Ja heeft opgegeven.
+
+Dit is een verdeling op basis van bereidheid om te rijden, geen registratie van werkelijk gereden ritten. Nieuwe of gewijzigde aanmeldingen kunnen de voorlopige indeling veranderen. Bestaande handmatige indelingen (zoals Waterland) gaan voor; een afgemelde ingedeelde chauffeur wordt daar niet ongemerkt vervangen. Bij onbereikbare historie verschijnt geen verzonnen eerlijke indeling. De functie leest eerdere reacties en verandert geen ouderreacties of opgeslagen rij-indelingen.
