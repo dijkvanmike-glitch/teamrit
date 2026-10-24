@@ -58,3 +58,11 @@ Alle controles: `node --test tests/*.test.mjs`.
 Bij meer dan vier rij-aanmeldingen voor een uitwedstrijd kiest TeamRit vier gezinnen met de minste eerdere rij-opgaven bij uitwedstrijden vóór die wedstrijddatum. Bij gelijk aantal gaat de oudste laatste rij-opgave voor, daarna sorteert TeamRit op een vaste gezinscode. Twee gekoppelde ouders tellen als één gezin. Alleen wie nu **Ja** opgeeft, is kandidaat. Overige aangemelde ouders staan met naam als **Reserve** op de wedstrijdkaart en in het teamoverzicht. Tot en met vier aanmeldingen rijdt iedereen die Ja heeft opgegeven.
 
 Dit is een verdeling op basis van bereidheid om te rijden, geen registratie van werkelijk gereden ritten. Nieuwe of gewijzigde aanmeldingen kunnen de voorlopige indeling veranderen. Bestaande handmatige indelingen (zoals Waterland) gaan voor; een afgemelde ingedeelde chauffeur wordt daar niet ongemerkt vervangen. Bij onbereikbare historie verschijnt geen verzonnen eerlijke indeling. De functie leest eerdere reacties en verandert geen ouderreacties of opgeslagen rij-indelingen.
+
+## Binnen 48 uur
+
+Na de beheerlogin toont de sectie **Binnen 48 uur** alleen wedstrijden met openstaande punten: geen fruitouder, minder dan vier beschikbare auto's bij uitwedstrijden, of gezinnen zonder reactie. Gekoppelde ouders tellen als één gezin; een reactie Nee telt ook als reactie. De bestaande `/api/overview` en `/api/fruit` worden uitsluitend gelezen. Er verandert niets aan reacties of coachgegevens.
+
+De controle vernieuwt elke minuut zolang de beheerpagina zichtbaar is, bij terugkeer naar de pagina, na opslaan en via **Waarschuwingen vernieuwen**. Dit is een controle in de geopende beheerpagina, geen achtergrondmelding. Tijden worden geïnterpreteerd in Europe/Amsterdam. Bij onbekende wedstrijdtijd telt een wedstrijddag mee zodra die het komende 48-uursvenster raakt. Een fout bij het ophalen wordt expliciet getoond; onbekende status wordt niet als geregeld beschouwd.
+
+**Maak WhatsApp-reminder** bereidt een bewerkbaar bericht met wedstrijdgegevens, openstaande punten en de publieke TeamRit-link voor. Pas na klikken op **Open WhatsApp met dit bericht** opent WhatsApp; de beheerder kiest zelf ontvangers en verstuurt zelf. Er wordt niets automatisch verzonden en geen coach ingeschakeld.

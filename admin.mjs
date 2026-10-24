@@ -1,6 +1,8 @@
+import { within48Hours, outstanding, reminder } from '/lib/admin-alerts.mjs';
 import { editableFields, validateFields, displayMatch } from '/lib/matches.mjs';
 import { gatheringTime, routeKey } from '/lib/timing.mjs';
 const $ = id => document.getElementById(id);
+let alertsVersion=0;
 let code = '', matches = [], active = null, dirty = false, busy = false;
 const fields = ['isoDate','home','opponent','time','gathering','location','note'];
 function status(message, success = false) { $('status').textContent = message; $('status').className = success ? 'success' : ''; }
@@ -67,6 +69,52 @@ async function load() {
     $('pick').add(new Option(d.isoDate+' · '+d.teams,m.id));
   }
 }
+async function loadAlerts() {
+  if(!code)return;
+  const version=++alertsVersion;
+  $('alertsList').replaceChildren();
+  $('alertsStatus').textContent='Openstaande punten controleren…';
+  const upcoming=matches.filter(m=>within48Hours(m));
+  let failed=0, count=0;
+  await Promise.all(upcoming.map(async raw=>{
+    const m=displayMatch(raw);
+    try {
+      const results=await Promise.all(['overview','fruit'].map(async api=>{
+        const res=await fetch('/api/'+api+'?match='+encodeURIComponent(m.id),{cache:'no-store',signal:AbortSignal.timeout(15000)});
+        if(!res.ok)throw Error('Status niet beschikbaar');
+        return res.json();
+      }));
+      if(version!==alertsVersion||!code)return;
+      const issues=outstanding(m,...results);
+      if(!issues.length)return;
+      count++;
+      const card=document.createElement('article'); card.className='alert-card';
+      const title=document.createElement('h3');title.textContent=m.teams;
+      const date=document.createElement('p');date.textContent=m.date+' · '+(m.time||'Tijd volgt');
+      const list=document.createElement('ul');
+      for(const issue of issues){const li=document.createElement('li');li.textContent=issue;list.append(li);}
+      const button=document.createElement('button');button.type='button';button.textContent='Maak WhatsApp-reminder';
+      button.onclick=()=>{
+        button.hidden=true;
+        const label=document.createElement('label');label.textContent='Jouw reminder';
+        const message=document.createElement('textarea');message.rows=10;message.value=reminder(m,issues,location.origin);
+        const link=document.createElement('a');link.className='whatsapp-link';link.textContent='Open WhatsApp met dit bericht';link.target='_blank';link.rel='noopener noreferrer';
+        const update=()=>{link.href='https://wa.me/?text='+encodeURIComponent(message.value);};update();message.oninput=update;
+        label.append(message);card.append(label,link);message.focus();
+      };
+      card.append(title,date,list,button);$('alertsList').append(card);
+    } catch { if(version===alertsVersion)failed++; }
+  }));
+  if(version!==alertsVersion||!code)return;
+  $('alertsStatus').textContent=failed?`Bij ${failed} wedstrijd(en) kon de status niet worden gecontroleerd. Probeer opnieuw. Andere waarschuwingen staan hieronder.`:count?'Alleen wedstrijden met openstaande punten staan hieronder.':'Geen openstaande punten bij wedstrijden binnen 48 uur.';
+}
+$('refreshAlerts').onclick=async()=>{
+  $('refreshAlerts').disabled=true;
+  try{await load();await loadAlerts();}catch(err){$('alertsList').replaceChildren();$('alertsStatus').textContent=err.message;}
+  finally{$('refreshAlerts').disabled=false;}
+};
+setInterval(()=>{if(code&&!document.hidden)loadAlerts();},60000);
+addEventListener('visibilitychange',()=>{if(code&&!document.hidden)loadAlerts();});
 function controls(disabled) {
   busy = disabled;
   for (const el of document.querySelectorAll('#workspace button,#workspace input,#workspace select,#workspace textarea')) el.disabled = disabled;
@@ -78,7 +126,7 @@ $('loginForm').onsubmit = async e => {
   try {
     const res = await fetch('/api/admin/matches', { headers:{ Authorization:'Bearer '+candidate }, cache:'no-store' });
     if (!res.ok) { const data = await res.json().catch(()=>({})); throw Error(data.error || (res.status===429?'Te veel pogingen. Probeer over een minuut opnieuw.':'Beheer openen is niet gelukt.')); }
-    await load(); code = candidate; $('code').value = ''; $('login').hidden = true; $('workspace').hidden = false; status('Beheer geopend. Kies een wedstrijd of voeg er een toe.',true);
+    await load(); code = candidate; loadAlerts(); $('code').value = ''; $('login').hidden = true; $('workspace').hidden = false; status('Beheer geopend. Kies een wedstrijd of voeg er een toe.',true);
   } catch (err) { status(err.message); } finally { $('unlock').disabled = false; }
 };
 $('newMatch').onclick = () => { if (discard()) { edit(null); status('Nieuwe wedstrijd.'); $('isoDate').focus(); } };
@@ -114,15 +162,15 @@ $('editor').onsubmit = async e => {
     const result = await res.json().catch(()=>({}));
     if (!res.ok) throw Error(result.error || (res.status===429?'Te veel verzoeken. Wacht een minuut.':'Opslaan mislukt. Je invoer blijft staan.'));
     active = { ...active,...data,revision:result.revision }; dirty=false;
-    try { await load(); edit(matches.find(m=>m.id===active.id) || active); status('Opgeslagen. Ouders zien de wijziging na openen of vernieuwen van TeamRit.',true); }
+    try { await load(); loadAlerts(); edit(matches.find(m=>m.id===active.id) || active); status('Opgeslagen. Ouders zien de wijziging na openen of vernieuwen van TeamRit.',true); }
     catch { status('Opgeslagen, maar opnieuw laden lukte niet. Probeer “Programma opnieuw laden”.',true); }
   } catch (err) { status(err.message); } finally { controls(false); }
 };
 $('reloadMatch').onclick = async () => {
   if (!discard()) return;
   const id=active?.id; controls(true);
-  try { await load(); const m=matches.find(m=>m.id===id); if(m) edit(m); else { $('editor').hidden=true; dirty=false; } status('Actueel programma geladen.',true); }
+  try { await load(); loadAlerts(); const m=matches.find(m=>m.id===id); if(m) edit(m); else { $('editor').hidden=true; dirty=false; } status('Actueel programma geladen.',true); }
   catch (err) { status(err.message); } finally { controls(false); }
 };
-$('logout').onclick = () => { if(discard()) { cancelRoute();route=null;code='';active=null;dirty=false;$('editor').reset();$('editor').hidden=true;$('workspace').hidden=true;$('login').hidden=false;status('Beheer afgesloten.'); } };
+$('logout').onclick = () => { if(discard()) { cancelRoute();route=null;code='';alertsVersion++;$('alertsList').replaceChildren();$('alertsStatus').textContent='';active=null;dirty=false;$('editor').reset();$('editor').hidden=true;$('workspace').hidden=true;$('login').hidden=false;status('Beheer afgesloten.'); } };
 addEventListener('beforeunload',e=>{ if(dirty || busy){ e.preventDefault();e.returnValue=''; } });

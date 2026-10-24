@@ -94,7 +94,7 @@ test('timing shows gathering without start time/travel and preserves existing tr
   const context=vm.createContext(sandbox);
   vm.runInContext(script.replace('init();',''),context);
   for(const [opponent,time,gathering,arrival,travelMinutes] of [['Alkmaar','14:25','13:05','13:40',undefined],['Magnus','14:10','12:55','13:25',30],['Overbos','11:45','09:55','11:00',undefined]]){
-  context.m={home:false,teams:opponent+' · WFHC JO14-1',date:'zaterdag',time,departOverride:gathering,travelMinutes};
+  context.m={meta:'Uit',home:false,teams:opponent+' · WFHC JO14-1',date:'zaterdag',time,departOverride:gathering,travelMinutes};
   for(const render of ['trTimingHtml(m)','trMatchContextHtml(m)','trCoachCardShell(m)']){
    const html=vm.runInContext(render,context);
    assert.ok(html.includes('Verzamelen bij WFHC · '+gathering));
