@@ -23,6 +23,20 @@ for(const file of ['index.html','admin.html','admin.mjs','lib/matches.mjs']){
   if(file==='index.html')text=text.replace('</style>','.top{flex-wrap:wrap;gap:12px}.logo{width:140px;height:58px;background:#fff;padding:4px}</style>');
   text=text.replaceAll('🏑','⚽').replaceAll('Voor Thijs (coach)','Voor de coach').replaceAll('Ben jij er, Thijs?','Ben jij er als coach?').replaceAll('Thijs','Coach').replaceAll('PILOT 1 VAN 3','PILOT').replaceAll('de afgesproken locatie logo','HV Hoorn logo');
   text=text.replace(/^<meta[^>]+(?:og:image|og:url|twitter:image)[^>]*>\n/gm,'');
+  if(file==='index.html'){
+   const site='https://teamrit-zaalvoetbal.netlify.app/';
+   text=text.replace('</head>',`<meta property="og:url" content="${site}">
+<meta property="og:site_name" content="TeamRit">
+<meta property="og:locale" content="nl_NL">
+<meta property="og:image" content="${site}${config.logo}?v=1">
+<meta property="og:image:secure_url" content="${site}${config.logo}?v=1">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="693">
+<meta property="og:image:height" content="175">
+<meta property="og:image:alt" content="HV Hoorn · Hovocubo-Veerhuys clublogo">
+<meta name="twitter:image" content="${site}${config.logo}?v=1">
+</head>`);
+  }
  }
  await writeFile(path.join(out,file),text);
 }
