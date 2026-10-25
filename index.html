@@ -229,6 +229,7 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 </section>
 </div>
 
+<script src="/team-config.js"></script>
 <script>
 let parents=[];let current=null,ans={present:null,drive:null,seats:null,infoAnswer:null};let fruitState=null;
 let trSavedAnswer=null,editMode=true,trChildText='';
@@ -296,9 +297,9 @@ document.querySelectorAll('.opt').forEach(x=>x.classList.remove('active'));
 for(const[k,v]of Object.entries(ans)){if(!v)continue;let e=document.querySelector('[data-k="'+k+'"][data-v="'+v+'"]');if(e)e.classList.add('active')}
 trSavedAnswer=saved;
 editMode=!saved;
-document.getElementById('fruitCard').classList.toggle('hidden',isInfo);
+document.getElementById('fruitCard').classList.toggle('hidden',isInfo||!trEnvironment.fruitEnabled);
 trRenderFormMode(isHome,isInfo);
-if(!isInfo){await trLoadFruitCard()}
+if(!isInfo&&trEnvironment.fruitEnabled){await trLoadFruitCard()}
 go('form')
 }
 document.querySelectorAll('#form .opt').forEach(b=>b.onclick=()=>{let k=b.dataset.k,v=b.dataset.v;document.querySelectorAll('[data-k="'+k+'"]').forEach(x=>x.classList.remove('active'));b.classList.add('active');ans[k]=v;if(k==='drive'){document.getElementById('seats').classList.toggle('hidden',v!=='Ja');if(v!=='Ja')ans.seats=null}})
@@ -337,10 +338,10 @@ async function coach(){
 const isHome=!!(trActiveMatch&&trActiveMatch.home);
 const isInfo=!!(trActiveMatch&&trActiveMatch.type==='info');
 document.getElementById('coach').classList.toggle('hideTransport',isHome||isInfo);
-document.getElementById('coachCard').classList.toggle('hidden',isInfo);
-document.getElementById('stats').classList.toggle('hidden',isInfo);
+document.getElementById('coachCard').classList.toggle('hidden',isInfo||!trEnvironment.fruitEnabled);
+document.getElementById('stats').classList.toggle('hidden',isInfo||!trEnvironment.fruitEnabled);
 document.getElementById('infoStats').classList.toggle('hidden',!isInfo);
-document.getElementById('rowsCard').classList.toggle('hidden',isInfo);
+document.getElementById('rowsCard').classList.toggle('hidden',isInfo||!trEnvironment.fruitEnabled);
 document.getElementById('infoRowsCard').classList.toggle('hidden',!isInfo);
 document.getElementById('coachEyebrow').textContent=isInfo?'Informatiemoment':'Teamoverzicht';
 document.querySelector('#coach h3').textContent=isInfo?('Informatiemoment · '+trActiveMatch.date):('Teamoverzicht'+(trActiveMatch?' · '+trActiveMatch.date:' JO14-1'));
@@ -460,7 +461,7 @@ if(trTransportRenderer)return trTransportRenderer(list,m);
 return '<div class="dashSub">Rij-indeling wordt geladen…</div>'
 }
 function trFruitLine(fruitName){
-if(!fruitName){return ''}
+if(!trEnvironment.fruitEnabled||!fruitName){return ''}
 return '<div class="dashLine">🍎 Fruit · '+fruitName+'</div>'
 }
 function trCoachLine(coach){
@@ -545,7 +546,7 @@ const el=document.getElementById('dash-'+m.id);
 try{
 const[ov,fr,co]=await Promise.all([
 fetch('/api/overview?match='+encodeURIComponent(m.id)).then(r=>r.json()),
-fetch('/api/fruit?match='+encodeURIComponent(m.id)).then(r=>r.json()),
+trEnvironment.fruitEnabled?fetch('/api/fruit?match='+encodeURIComponent(m.id)).then(r=>r.json()):Promise.resolve({parentName:null}),
 fetch('/api/coach?match='+encodeURIComponent(m.id)).then(r=>r.json())
 ]);
 const list=Array.isArray(ov)?ov:[];

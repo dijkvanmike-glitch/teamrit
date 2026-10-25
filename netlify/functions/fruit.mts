@@ -1,3 +1,4 @@
+import teamConfig from '../../lib/team-config.mjs';
 import type { Context, Config } from "@netlify/functions";
 
 function supabaseHeaders() {
@@ -10,6 +11,7 @@ function supabaseHeaders() {
 }
 
 export default async (req: Request, context: Context) => {
+  if (!teamConfig.fruitEnabled) return Response.json({error:"Fruithap is uitgeschakeld."},{status:404});
   const base = Netlify.env.get("SUPABASE_URL");
 
   if (req.method === "GET") {

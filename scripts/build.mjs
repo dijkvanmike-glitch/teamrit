@@ -1,0 +1,34 @@
+import { cp, readFile, writeFile, rm, mkdir } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const environment=process.env.TEAMRIT_ENVIRONMENT;
+if(!['hockey','zaalvoetbal'].includes(environment))throw Error('Stel TEAMRIT_ENVIRONMENT expliciet in op hockey of zaalvoetbal.');
+const config=JSON.parse(await readFile(path.join(root,'environments',environment+'.json'),'utf8'));
+// Identity values are inserted in HTML and existing JS strings. Keep them plain text.
+for(const value of [config.teamName,config.clubName,config.gatheringDescription])if(typeof value!=='string'||/[<>"'&\\\r\n]/.test(value))throw Error('Gebruik gewone tekst zonder HTML of aanhalingstekens in de teaminstellingen.');
+if(!/^[a-z0-9-]+\.(png|svg|jpg|webp)$/.test(config.logo))throw Error('Ongeldige logobestandsnaam.');
+if(config.routeOrigin!==null&&!/^[-\d.]+,[-\d.]+$/.test(config.routeOrigin))throw Error('Ongeldig vertrekpunt.');
+const out=path.join(root,'dist');
+await rm(out,{recursive:true,force:true});await mkdir(out);
+for(const file of ['index.html','admin.html','admin.css','admin.mjs','_headers','lib','netlify','matches-seed.json',config.logo])await cp(path.join(root,file),path.join(out,file),{recursive:true});
+if(environment==='hockey')for(const file of ['og-preview.jpg','og-preview-v2.jpg'])await cp(path.join(root,file),path.join(out,file));
+for(const file of ['index.html','admin.html','admin.mjs','lib/matches.mjs']){
+ let text=await readFile(path.join(out,file),'utf8');
+ text=text.replaceAll('Vanaf WFHC, Roskam 6 in Zwaag.',config.gatheringDescription)
+  .replaceAll('WFHC JO14-1',config.teamName).replaceAll('JO14-1',config.teamName)
+  .replaceAll(".includes('WFHC')",'.includes('+JSON.stringify(config.teamName.toUpperCase())+')')
+  .replaceAll('WFHC',config.clubName).replaceAll('/wfhc-logo.png','/'+config.logo);
+ if(environment==='zaalvoetbal'){
+  text=text.replaceAll('🏑','⚽');
+  text=text.replace(/^<meta[^>]+(?:og:image|og:url|twitter:image)[^>]*>\n/gm,'');
+ }
+ await writeFile(path.join(out,file),text);
+}
+await writeFile(path.join(out,'lib/team-config.mjs'),'export default '+JSON.stringify(config)+';\n');
+await writeFile(path.join(out,'team-config.js'),'const trEnvironment = '+JSON.stringify({environment,fruitEnabled:config.fruitEnabled})+';\n');
+if(environment==='zaalvoetbal')await writeFile(path.join(out,'matches-seed.json'),'[]\n');
+// Publish only browser assets; server functions stay outside the public directory.
+await mkdir(path.join(out,'public'));
+for(const file of ['index.html','admin.html','admin.css','admin.mjs','_headers','lib','matches-seed.json','team-config.js',config.logo,...(environment==='hockey'?['og-preview.jpg','og-preview-v2.jpg']:[])])await cp(path.join(out,file),path.join(out,'public',file),{recursive:true});
+console.log('Gebouwd: '+environment+' → dist (geen publicatie uitgevoerd)');

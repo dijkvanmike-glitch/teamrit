@@ -1,3 +1,4 @@
+import teamConfig from '/lib/team-config.mjs';
 import { within48Hours, outstanding, reminder } from '/lib/admin-alerts.mjs';
 import { editableFields, validateFields, displayMatch } from '/lib/matches.mjs';
 import { gatheringTime, routeKey } from '/lib/timing.mjs';
@@ -51,7 +52,7 @@ function edit(match) {
   active = match || { id:'match-'+crypto.randomUUID(), revision:0 };
   const data = match ? editableFields(match) : { isoDate:'',home:true,opponent:'',time:'',gathering:'',location:'',note:'' };
   for (const key of fields) $(key).value = String(data[key]);
-  $('gatheringMode').value=match?.gatheringMode || (data.gathering?'manual':'auto');
+  $('gatheringMode').value=match?.gatheringMode || (data.gathering||!teamConfig.routeOrigin?'manual':'auto');
   if(match?.gatheringMode==='auto'&&Number.isInteger(match.travelMinutes)&&routeKey(match.travelLocation||'')===routeKey(data.location))route={location:data.location,travelMinutes:match.travelMinutes};
   timingLocal();
   $('pick').value = match?.id || '';
@@ -80,6 +81,7 @@ async function loadAlerts() {
     const m=displayMatch(raw);
     try {
       const results=await Promise.all(['overview','fruit'].map(async api=>{
+        if(api==='fruit'&&!teamConfig.fruitEnabled)return {parentName:null};
         const res=await fetch('/api/'+api+'?match='+encodeURIComponent(m.id),{cache:'no-store',signal:AbortSignal.timeout(15000)});
         if(!res.ok)throw Error('Status niet beschikbaar');
         return res.json();

@@ -66,3 +66,37 @@ Na de beheerlogin toont de sectie **Binnen 48 uur** alleen wedstrijden met opens
 De controle vernieuwt elke minuut zolang de beheerpagina zichtbaar is, bij terugkeer naar de pagina, na opslaan en via **Waarschuwingen vernieuwen**. Dit is een controle in de geopende beheerpagina, geen achtergrondmelding. Tijden worden geïnterpreteerd in Europe/Amsterdam. Bij onbekende wedstrijdtijd telt een wedstrijddag mee zodra die het komende 48-uursvenster raakt. Een fout bij het ophalen wordt expliciet getoond; onbekende status wordt niet als geregeld beschouwd.
 
 **Maak WhatsApp-reminder** bereidt een bewerkbaar bericht met wedstrijdgegevens, openstaande punten en de publieke TeamRit-link voor. Pas na klikken op **Open WhatsApp met dit bericht** opent WhatsApp; de beheerder kiest zelf ontvangers en verstuurt zelf. Er wordt niets automatisch verzonden en geen coach ingeschakeld.
+
+## Twee afzonderlijke omgevingen, één codebasis
+
+Productkeuze: twee Netlify-sites vanuit dezelfde repository en dezelfde bronmap `teamrit`, met elk een eigen Supabase-project. Dit vervangt het eerdere voorstel om beide teams nu al binnen één database te beheren. Voor twee pilots geeft dit scheiding zonder een nieuw rechtenmodel te bouwen. Een teamkeuze in de browser kan nooit de andere database selecteren.
+
+`netlify.toml` bouwt met `node scripts/build.mjs`, publiceert uitsluitend `dist/public` en bundelt Functions uit `dist/netlify/functions`. De build vereist een expliciete `TEAMRIT_ENVIRONMENT`; een ontbrekende of onbekende waarde stopt de build.
+
+| Instelling | Bestaande hockeysite | Nieuwe zaalvoetbalsite |
+|---|---|---|
+| TEAMRIT_ENVIRONMENT | hockey | zaalvoetbal |
+| SUPABASE_URL | Bestaande database | Nieuw, afzonderlijk Supabase-project |
+| SUPABASE_ANON_KEY | Bestaande sleutel | Sleutel van nieuwe database |
+| SUPABASE_SERVICE_ROLE_KEY | Bestaande geheime sleutel | Geheime sleutel van nieuwe database |
+| TEAMRIT_ADMIN_CODE | Bestaande code | Eigen code van minimaal 20 tekens |
+
+Gebruik geen hockeydatabase of hockeygeheimen voor zaalvoetbal, ook niet tijdelijk. Houd geheime waarden buiten de repository en beperk schrijfsleutels tot de productiecontext. Afzonderlijke deployments betekenen niet dat verkeerde database-instellingen automatisch worden herkend: controleer vóór activering dat de Supabase-projectadressen daadwerkelijk verschillen.
+
+Beide sites kunnen onafhankelijk worden gedeployed en teruggezet. Koppeling aan dezelfde branch met automatische publicatie kan wel beide sites tegelijk laten bouwen; schakel automatische publicatie per site uit als iedere release bewust apart moet worden vrijgegeven. Er zijn geen twee bronversies nodig.
+
+### Voorbereide instellingen
+
+- `environments/hockey.json` bewaart de bestaande identiteit, fruitfunctie, wedstrijden en het vertrekpunt.
+- `environments/zaalvoetbal.json` gebruikt voorlopig de naam Zaalvoetbal en een neutraal TeamRit-logo. Later hier naam en lokaal logobestand wijzigen; daarna alleen de zaalvoetbalsite opnieuw bouwen.
+- Zaalvoetbal begint met een leeg wedstrijdprogramma. Hockeywedstrijden worden ook bij een storing niet als terugval gebruikt.
+- Fruithap is voor zaalvoetbal uitgeschakeld in de deelnemerspagina, overzichten, beheerwaarschuwingen en de server-API. De fruit-API retourneert 404 zonder de database te benaderen.
+- Het zaalvoetbalvertrekpunt is onbekend. Nieuwe wedstrijden gebruiken handmatig verzamelen; routeberekening weigert een aanvraag zolang `routeOrigin` null is. Vul later de eigen lengtegraad,breedtegraad in. De overige bestaande plannings- en vervoerregels blijven behouden.
+
+### Nog nodig voor livegang
+
+Deze wijziging maakt lokaal beide builds mogelijk en wijzigt geen bestaande cloudomgeving. Maak voor zaalvoetbal een aparte Netlify-site en Supabase-database aan. Het volledige oorspronkelijke databaseschema van `parents`, `responses`, `coach_status` en eventuele andere bestaande tabellen staat niet in deze bronmap. Haal daarom eerst een schema-export inclusief toegangsregels uit de bestaande database, zonder persoonsgegevens, en controleer die voor de nieuwe database. De aanwezige migratie maakt alleen `matches` aan en is geen volledige database-installatie. Voeg vervolgens uitsluitend de zaalvoetballeden toe.
+
+Controleer vóór publicatie: beide sites tonen uitsluitend hun eigen leden en wedstrijden; een wijziging via de ene site raakt de andere database niet; beheer werkt met de eigen code; hockey houdt fruit; zaalvoetbal heeft geen fruitmeldingen en `/api/fruit` geeft 404. De lokale tests vervangen deze controle van de cloudconfiguratie niet.
+
+Lokaal bouwen: `TEAMRIT_ENVIRONMENT=hockey node scripts/build.mjs` of `TEAMRIT_ENVIRONMENT=zaalvoetbal node scripts/build.mjs`. `dist` is gegenereerde uitvoer en hoeft niet in versiebeheer. Alle tests: `node --test tests/*.test.mjs`.

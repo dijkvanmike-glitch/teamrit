@@ -1,8 +1,10 @@
+import teamConfig from '../../lib/team-config.mjs';
 // Public club addresses only. Netherlands, single address lookup; no autocomplete.
-const origin='5.03922359,52.66048687'; // PDOK: Roskam 6, 1689VR Zwaag (WFHC).
+const origin=teamConfig.routeOrigin; // PDOK: Roskam 6, 1689VR Zwaag (WFHC).
 const headers={ 'User-Agent':'TeamRit/1.0 (https://wfhc-teamrit.netlify.app)', Referer:'https://wfhc-teamrit.netlify.app/' };
 const normalized=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b\d{4}\s?[a-z]{2}\b/g,'').replace(/[^a-z0-9]/g,'');
 export async function drivingEstimate(location, fetcher=fetch) {
+  if(!origin)throw Error("Stel eerst het vertrekpunt in of kies handmatig verzamelen.");
   if(typeof location!=='string'||location.length>240||!location.trim())throw Error('Vul straat, huisnummer en plaats in. Zet veldinformatie bij Notitie.');
   const url=new URL('https://api.pdok.nl/bzk/locatieserver/search/v3_1/free');
   url.search=new URLSearchParams({q:location,rows:'10',fq:'type:adres',fl:'weergavenaam,centroide_ll'});
