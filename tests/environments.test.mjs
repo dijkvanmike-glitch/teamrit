@@ -18,7 +18,7 @@ test('both deployments preserve hockey and exclude hockey data and fruit in futs
   const api=(await import(pathToFileURL(path.join(out,'netlify/functions/fruit.mts'))+'?'+environment)).default;
   if(environment==='zaalvoetbal'){
    assert.equal(config.fruitEnabled,false);assert.deepEqual(seed,[]);
-   assert.doesNotMatch(page,/WFHC|JO14-1|wfhc-teamrit|wfhc-logo/);
+   assert.doesNotMatch(page,/WFHC|JO14-1|wfhc-teamrit|wfhc-logo|Thijs/);
    assert.match(page,/teamrit-logo.svg/);
    // Config is cached by module URL; this futsal import runs first in a fresh test process.
    const alerts=await import(pathToFileURL(path.join(out,'lib/admin-alerts.mjs')));
