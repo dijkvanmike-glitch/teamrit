@@ -20,7 +20,8 @@ for(const file of ['index.html','admin.html','admin.mjs','lib/matches.mjs']){
   .replaceAll(".includes('WFHC')",'.includes('+JSON.stringify(config.teamName.toUpperCase())+')')
   .replaceAll('WFHC',config.clubName).replaceAll('/wfhc-logo.png','/'+config.logo);
  if(environment==='zaalvoetbal'){
-  text=text.replaceAll('🏑','⚽').replaceAll('Voor Thijs (coach)','Voor de coach').replaceAll('Ben jij er, Thijs?','Ben jij er als coach?').replaceAll('Thijs','Coach').replaceAll('PILOT 1 VAN 3','PILOT').replaceAll('de afgesproken locatie logo','TeamRit logo');
+  if(file==='index.html')text=text.replace('</style>','.top{flex-wrap:wrap;gap:12px}.logo{width:140px;height:58px;background:#fff;padding:4px}</style>');
+  text=text.replaceAll('🏑','⚽').replaceAll('Voor Thijs (coach)','Voor de coach').replaceAll('Ben jij er, Thijs?','Ben jij er als coach?').replaceAll('Thijs','Coach').replaceAll('PILOT 1 VAN 3','PILOT').replaceAll('de afgesproken locatie logo','HV Hoorn logo');
   text=text.replace(/^<meta[^>]+(?:og:image|og:url|twitter:image)[^>]*>\n/gm,'');
  }
  await writeFile(path.join(out,file),text);
