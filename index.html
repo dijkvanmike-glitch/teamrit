@@ -157,6 +157,7 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 <div id="alreadySummary" class="dashBlock"></div>
 <button class="secondary" id="alreadyWijzigenBtn">Wijzigen</button>
 </div>
+<div id="childPresenceCards" class="hidden"></div>
 <div class="card question" id="presenceCard"><h3 id="presence"></h3><div class="opts"><button class="opt" data-k="present" data-v="Ja">Ja</button><button class="opt" data-k="present" data-v="Nee">Nee</button></div></div>
 <div class="card question hidden" id="infoQ"><h3>Ben je erbij op 14 augustus?</h3><div class="opts" style="grid-template-columns:1fr"><button class="opt" data-k="infoAnswer" data-v="samen">Wij zijn erbij</button><button class="opt" id="infoSpelerBtn" data-k="infoAnswer" data-v="speler">Alleen … is erbij</button><button class="opt" data-k="infoAnswer" data-v="geen">Wij kunnen niet</button></div></div>
 <div class="card question" id="driveQ"><h3>Kun je rijden?</h3><div class="opts"><button class="opt" data-k="drive" data-v="Ja">Ja</button><button class="opt" data-k="drive" data-v="Nee">Nee</button></div></div>
@@ -233,6 +234,10 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 <script>
 let parents=[];let current=null,ans={present:null,drive:null,seats:null,infoAnswer:null};let fruitState=null;
 let trSavedAnswer=null,editMode=true,trChildText='';
+let childPresence={};
+function separateChildren(){return trEnvironment.environment==='zaalvoetbal'&&current?.children.length>1;}
+function renderChildPresence(){const box=document.getElementById('childPresenceCards');box.replaceChildren();if(!separateChildren())return;for(const child of current.children){const card=document.createElement('div');card.className='card question';const title=document.createElement('h3');title.textContent='Is '+child.split(' ')[0]+' aanwezig?';const opts=document.createElement('div');opts.className='opts';for(const value of ['Ja','Nee']){const button=document.createElement('button');button.className='opt'+(childPresence[child]===value?' active':'');button.textContent=value;button.onclick=()=>{childPresence[child]=value;renderChildPresence();};opts.append(button);}card.append(title,opts);box.append(card);}}
+function playerAnswers(p){return p.children.map(child=>({child,present:p.childPresence?.[child]??p.present}));}
 function go(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');location.hash=id;if(id==='coach')coach();if(id==='home')trRenderMatches();if(id==='coachpicker')trRenderCoachPicker();scrollTo(0,0)}
 addEventListener('hashchange',()=>{let id=location.hash.slice(1);if(document.getElementById(id))go(id)})
 function render(q=''){let box=document.getElementById('list');box.innerHTML='';parents.filter(p=>(p.name+' '+p.children.join(' ')).toLowerCase().includes(q.toLowerCase())).forEach(p=>{let b=document.createElement('button');b.className='person';let initials=p.name.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();b.innerHTML='<span class="avatar">'+initials+'</span><span><strong>'+p.name+'</strong><small>'+p.children.join(' & ')+'</small></span>';b.onclick=()=>select(p);box.appendChild(b)})}
@@ -241,7 +246,7 @@ function trAnswerSummaryHtml(saved,isHome,isInfo){
 if(isInfo){
 return '<div class="dashLine">Speler aanwezig '+(saved.present==='Ja'?'✓':'✗')+'</div><div class="dashLine">Ouder/verzorger aanwezig '+(saved.parentPresent==='Ja'?'✓':'✗')+'</div>'
 }
-let html='<div class="dashLine">Aanwezig '+(saved.present==='Ja'?'✓':'✗')+'</div>';
+let html=separateChildren()&&saved.childPresence?current.children.map(c=>'<div class="dashLine">'+c+' · '+(saved.childPresence[c]||'Nog niet doorgegeven')+'</div>').join(''):'<div class="dashLine">Aanwezig '+(saved.present==='Ja'?'✓':'✗')+'</div>';
 if(!isHome){
 html+='<div class="dashLine">Kan rijden '+(saved.drive==='Ja'?'✓':'✗')+'</div>';
 if(saved.drive==='Ja')html+='<div class="dashLine">'+(saved.seats||'–')+' plekken</div>'
@@ -258,7 +263,8 @@ document.getElementById('alreadyTitle').textContent='✓ '+trChildText+' '+isAre
 document.getElementById('alreadySummary').innerHTML=trAnswerSummaryHtml(trSavedAnswer,isHome,isInfo)
 }
 const showForm=editMode;
-document.getElementById('presenceCard').classList.toggle('hidden',isInfo||!showForm);
+document.getElementById('presenceCard').classList.toggle('hidden',isInfo||!showForm||separateChildren());
+document.getElementById('childPresenceCards').classList.toggle('hidden',isInfo||!showForm||!separateChildren());
 document.getElementById('infoQ').classList.toggle('hidden',!isInfo||!showForm);
 document.getElementById('driveQ').classList.toggle('hidden',isInfo||isHome||!showForm);
 document.getElementById('seats').classList.toggle('hidden',isInfo||isHome||ans.drive!=='Ja'||!showForm);
@@ -279,6 +285,7 @@ let saved=null;
 try{const res=await fetch('/api/response?parent='+encodeURIComponent(p.name)+'&match='+encodeURIComponent(trActiveMatch.id));saved=await res.json()}catch(e){saved=null}
 const isHome=!!(trActiveMatch&&trActiveMatch.home);
 const isInfo=!!(trActiveMatch&&trActiveMatch.type==='info');
+childPresence=Object.fromEntries(p.children.map(c=>[c,saved?.childPresence?.[c]??saved?.present??null]));renderChildPresence();
 ans=saved?{present:saved.present,drive:saved.drive,seats:saved.seats,infoAnswer:null}:{present:null,drive:null,seats:null,infoAnswer:null};
 if(isHome){ans.drive=null;ans.seats=null}
 if(isInfo){
@@ -315,6 +322,7 @@ else if(ans.infoAnswer==='speler'){present='Ja';parentPresent='Nee'}
 else{present='Nee';parentPresent='Nee'}
 drive=null;seats=null
 }else{
+if(separateChildren()){if(current.children.some(c=>!childPresence[c]))return alert('Geef voor beide kinderen Ja of Nee door.');ans.present=Object.values(childPresence).includes('Ja')?'Ja':'Nee';}
 if(!ans.present)return alert('Beantwoord de vragen.');
 if(!isHome){
 if(!ans.drive)return alert('Beantwoord de vragen.');
@@ -326,7 +334,7 @@ const btn=document.getElementById('save');
 btn.disabled=true;
 btn.textContent='Even opslaan...';
 try{
-const res=await fetch('/api/response',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:current.name,matchId:trActiveMatch.id,present,drive,seats,parentPresent})});
+const res=await fetch('/api/response',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:current.name,matchId:trActiveMatch.id,present,drive,seats,parentPresent,...(separateChildren()?{childPresence}:{} )})});
 if(!res.ok)throw new Error('opslaan mislukt');
 document.getElementById('routeLink').style.display=(isHome||isInfo)?'none':'';
 go('done')
@@ -372,7 +380,7 @@ return
 }
 document.getElementById('transportOverview').innerHTML=trActiveMatch.home?'':trTransportHtml(data,trActiveMatch);
 let rr=0,aa=0,dd=0,out='';
-data.forEach(p=>{if(p.present||p.drive){rr++;if(p.present==='Ja')aa++;if(p.drive==='Ja')dd++}out+='<tr><td><strong>'+p.name+'</strong></td><td>'+p.children.join('<br>')+'</td><td>'+badge(p.present)+'</td><td class="colDrive">'+badge(p.drive)+'</td><td class="colSeats">'+(p.drive==='Ja'?(p.seats||'–'):'–')+'</td></tr>'});
+data.forEach(p=>{if(p.present||p.drive){rr++;aa+=trEnvironment.environment==='zaalvoetbal'?playerAnswers(p).filter(c=>c.present==='Ja').length:(p.present==='Ja'?1:0);if(p.drive==='Ja')dd++}out+='<tr><td><strong>'+p.name+'</strong></td><td>'+p.children.join('<br>')+'</td><td>'+(trEnvironment.environment==='zaalvoetbal'?playerAnswers(p).map(c=>badge(c.present)).join('<br>'):badge(p.present))+'</td><td class="colDrive">'+badge(p.drive)+'</td><td class="colSeats">'+(p.drive==='Ja'?(p.seats||'–'):'–')+'</td></tr>'});
 document.getElementById('rows').innerHTML=out;
 document.getElementById('r').textContent=rr;
 document.getElementById('a').textContent=aa;
@@ -453,7 +461,7 @@ return '<div class="dashLine">📍 '+(gathering?'Verzamelen WFHC · '+gathering:
 function trResponseHtml(list){
 let total=list.length;
 let responded=list.filter(p=>p.present||p.drive).length;
-let present=list.filter(p=>p.present==='Ja').length;
+let present=trEnvironment.environment==='zaalvoetbal'?list.flatMap(playerAnswers).filter(p=>p.present==='Ja').length:list.filter(p=>p.present==='Ja').length;
 return '<div class="stats" style="grid-template-columns:repeat(2,1fr)"><div class="stat"><span>Gereageerd</span><strong>'+responded+' van '+total+'</strong></div><div class="stat"><span>Aanwezig</span><strong>'+present+'</strong></div></div>'
 }
 let trTransportRenderer=null;

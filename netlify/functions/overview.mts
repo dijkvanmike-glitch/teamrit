@@ -1,3 +1,5 @@
+import teamConfig from '../../lib/team-config.mjs';
+import {attendance} from '../../lib/attendance.mjs';
 import seed from '../../matches-seed.json' with { type:'json' };
 import { mergeMatches } from '../../lib/matches.mjs';
 import { drivingHistory } from '../../lib/transport.mjs';
@@ -5,6 +7,7 @@ import type { Context, Config } from "@netlify/functions";
 
 type ParentRow = { name: string; children: string[] };
 type ResponseRow = {
+  child_presence?: Record<string,string>;
   family_key: string;
   parent_name: string;
   present: string | null;
@@ -33,7 +36,7 @@ export default async (req: Request, context: Context) => {
 
   const [parentsRes, responsesRes] = await Promise.all([
     fetch(`${base}/rest/v1/parents?select=name,children&order=name`, { headers }),
-    fetch(`${base}/rest/v1/responses?match_id=eq.${encodeURIComponent(match)}&select=family_key,parent_name,present,drive,seats,parent_present`, { headers }),
+    fetch(`${base}/rest/v1/responses?match_id=eq.${encodeURIComponent(match)}&select=family_key,parent_name,present,drive,seats,parent_present${teamConfig.environment==='zaalvoetbal'?',child_presence':''}`, { headers }),
   ]);
 
   if (!parentsRes.ok || !responsesRes.ok) {
@@ -90,6 +93,7 @@ export default async (req: Request, context: Context) => {
         name: fam.parentNames.join(" & "),
         children: fam.children,
         present: r?.present ?? null,
+        ...(teamConfig.environment==='zaalvoetbal'?{childPresence:attendance(fam.children,r?.child_presence,r?.present)}:{}),
         drive: r?.drive ?? null,
         seats: r?.seats ?? null,
         parentPresent: r?.parent_present ?? null,

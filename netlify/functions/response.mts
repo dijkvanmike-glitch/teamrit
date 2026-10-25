@@ -1,3 +1,5 @@
+import teamConfig from '../../lib/team-config.mjs';
+import {validateChildPresence} from '../../lib/attendance.mjs';
 import type { Context, Config } from "@netlify/functions";
 
 function supabaseHeaders() {
@@ -9,13 +11,13 @@ function supabaseHeaders() {
   };
 }
 
-async function familyKeyForParent(base: string, headers: Record<string, string>, name: string): Promise<string | null> {
+async function familyKeyForParent(base: string, headers: Record<string, string>, name: string): Promise<any> {
   const res = await fetch(`${base}/rest/v1/parents?name=eq.${encodeURIComponent(name)}&select=children`, { headers });
   if (!res.ok) return null;
   const rows = await res.json();
   const children: string[] = rows[0]?.children ?? [];
   if (!children.length) return null;
-  return [...children].sort().join("|");
+  return {key:[...children].sort().join("|"),children};
 }
 
 export default async (req: Request, context: Context) => {
@@ -40,7 +42,7 @@ export default async (req: Request, context: Context) => {
     }
 
     const res = await fetch(
-      `${base}/rest/v1/responses?family_key=eq.${encodeURIComponent(familyKey)}&match_id=eq.${encodeURIComponent(match)}&select=present,drive,seats,parent_present,parent_name`,
+      `${base}/rest/v1/responses?family_key=eq.${encodeURIComponent(familyKey.key)}&match_id=eq.${encodeURIComponent(match)}&select=present,drive,seats,parent_present,parent_name${teamConfig.environment==='zaalvoetbal'?',child_presence':''}`,
       { headers }
     );
 
@@ -54,7 +56,7 @@ export default async (req: Request, context: Context) => {
     const rows = await res.json();
     const row = rows[0] ?? null;
     const out = row
-      ? { present: row.present, drive: row.drive, seats: row.seats, parentPresent: row.parent_present, respondedBy: row.parent_name }
+      ? { present: row.present, drive: row.drive, seats: row.seats, parentPresent: row.parent_present, respondedBy: row.parent_name, childPresence:row.child_presence ?? null }
       : null;
     return new Response(JSON.stringify(out), {
       headers: { "content-type": "application/json" },
@@ -79,6 +81,8 @@ export default async (req: Request, context: Context) => {
       return new Response(JSON.stringify({ error: "Onbekende ouder" }), { status: 400 });
     }
 
+    let childPresence;
+    if(teamConfig.environment==='zaalvoetbal'){try{childPresence=validateChildPresence(familyKey.children,body.childPresence,present);}catch(e){return Response.json({error:e.message},{status:400});}}
     const res = await fetch(`${base}/rest/v1/responses`, {
       method: "POST",
       headers: {
@@ -87,10 +91,11 @@ export default async (req: Request, context: Context) => {
       },
       body: JSON.stringify([
         {
-          family_key: familyKey,
+          family_key: familyKey.key,
           parent_name: name,
           match_id: matchId,
-          present: present ?? null,
+          present: childPresence ? (Object.values(childPresence).includes('Ja')?'Ja':'Nee') : present ?? null,
+          ...(childPresence?{child_presence:childPresence}:{}),
           drive: drive ?? null,
           seats: seats ?? null,
           parent_present: parentPresent ?? null,
