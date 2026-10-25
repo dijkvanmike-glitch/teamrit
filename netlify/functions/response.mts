@@ -54,7 +54,8 @@ export default async (req: Request, context: Context) => {
     }
 
     const rows = await res.json();
-    const row = rows[0] ?? null;
+    const candidate = rows[0] ?? null;
+    const row = teamConfig.environment==='zaalvoetbal' && candidate && !candidate.present && !candidate.drive && !candidate.seats && !candidate.parent_present && !Object.values(candidate.child_presence||{}).some(Boolean) ? null : candidate;
     const out = row
       ? { present: row.present, drive: row.drive, seats: row.seats, parentPresent: row.parent_present, respondedBy: row.parent_name, childPresence:row.child_presence ?? null }
       : null;

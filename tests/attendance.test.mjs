@@ -24,5 +24,7 @@ test('API stores one family response, shares per-child answers and rejects incom
   assert.equal(stored.family_key,[...kids].sort().join('|'));assert.equal(stored.seats,'3');assert.deepEqual(stored.child_presence,body.childPresence);
   const other=await (await response(new Request('https://app/api/response?parent=Karijn&match=test'),{})).json();assert.deepEqual(other.childPresence,body.childPresence);
   assert.equal((await response(new Request('https://app/api/response',{method:'POST',body:JSON.stringify({...body,childPresence:{}})}),{})).status,400);
+  stored={present:null,drive:null,seats:null,parent_present:null,child_presence:null};
+  assert.equal(await (await response(new Request('https://app/api/response?parent=Karijn&match=test'),{})).json(),null);
  }finally{globalThis.fetch=original;config.environment='hockey';}
 });
