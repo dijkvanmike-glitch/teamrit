@@ -1,0 +1,14 @@
+BEGIN;
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT SELECT ON public.parents, public.matches, public.responses, public.coach_status TO anon, authenticated;
+GRANT INSERT, UPDATE ON public.responses, public.coach_status TO anon, authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
+CREATE POLICY "roster is readable" ON public."parents" FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "responses can be updated" ON public."responses" FOR UPDATE TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "responses can be submitted" ON public."responses" FOR INSERT TO anon, authenticated WITH CHECK (true);
+CREATE POLICY "responses are readable" ON public."responses" FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "coach status can be updated" ON public."coach_status" FOR UPDATE TO anon, authenticated USING (true);
+CREATE POLICY "coach status can be submitted" ON public."coach_status" FOR INSERT TO anon, authenticated WITH CHECK (true);
+CREATE POLICY "coach status is readable" ON public."coach_status" FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "matches_public_read" ON public."matches" FOR SELECT TO anon, authenticated USING (true);
+COMMIT;

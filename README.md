@@ -100,3 +100,15 @@ Deze wijziging maakt lokaal beide builds mogelijk en wijzigt geen bestaande clou
 Controleer vóór publicatie: beide sites tonen uitsluitend hun eigen leden en wedstrijden; een wijziging via de ene site raakt de andere database niet; beheer werkt met de eigen code; hockey houdt fruit; zaalvoetbal heeft geen fruitmeldingen en `/api/fruit` geeft 404. De lokale tests vervangen deze controle van de cloudconfiguratie niet.
 
 Lokaal bouwen: `TEAMRIT_ENVIRONMENT=hockey node scripts/build.mjs` of `TEAMRIT_ENVIRONMENT=zaalvoetbal node scripts/build.mjs`. `dist` is gegenereerde uitvoer en hoeft niet in versiebeheer. Alle tests: `node --test tests/*.test.mjs`.
+
+## Ingerichte zaalvoetbalpilot — 25 oktober 2026
+
+- Netlify-project: `teamrit-zaalvoetbal`, https://teamrit-zaalvoetbal.netlify.app/.
+- Supabase-project: `bjzoggttcuudvhkzlgcq` (West EU / Ireland). Hockey gebruikt een ander project.
+- Productiebranch zaalvoetbal: `setup-separated-environments`; hockey blijft op de bestaande branch. Beide komen uit dezelfde repository. Merge deze nieuwe buildconfiguratie pas naar hockey nadat daar expliciet de juiste buildinstelling is voorbereid.
+- Vijf lege tabellen aangemaakt vanuit een alleen-lezen inspectie van de hockeystructuur. Geen tabelinhoud overgenomen. Er waren geen eigen functies of triggers.
+- RLS is aan. Publieke rollen krijgen alleen lezen op ouders en wedstrijden en lezen/toevoegen/wijzigen op reacties en coachstatus. Geen publiek verwijderen, trunceren of schrijven op ouders/wedstrijden. De fruit-tabel blijft afgeschermd.
+- Toegangsregels staan apart in `supabase/zaalvoetbal-activate-access.sql`; uitsluitend uitgevoerd op de nieuwe zaalvoetbaldatabase na expliciete toestemming. Dit bestand is geen hockeymigratie.
+- De drie Supabase-instellingen zijn geheim opgeslagen, uitsluitend voor productie. Previewdeploys en agentruns krijgen geen databasesleutels.
+- Nog nodig: eigen `TEAMRIT_ADMIN_CODE` (minimaal 20 tekens), daarna opnieuw deployen. Zonder deze instelling blijft wedstrijdbeheer geblokkeerd.
+- Spelers/ouders, teamnaam, eigen logo en vertrekpunt worden later toegevoegd.
