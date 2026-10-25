@@ -11,6 +11,7 @@ let route = null, routeRequest = null, routeVersion = 0, timingTimer, ongoingCal
 function startCalculation(){ongoingCalculation=calculateRoute();return ongoingCalculation;}
 function read() {
   const data=Object.fromEntries(fields.map(key => [key,key==='home'?$('home').value==='true':$(key).value]));
+  if(active?.type==='training')Object.assign(data,{type:'training',endTime:active.endTime});
   data.gatheringMode=$('gatheringMode').value;
   if(route && routeKey(route.location)===routeKey(data.location)) Object.assign(data,{travelMinutes:route.travelMinutes,travelLocation:route.location});
   return data;
