@@ -41,7 +41,7 @@ for(const file of ['index.html','admin.html','admin.mjs','lib/matches.mjs']){
  await writeFile(path.join(out,file),text);
 }
 await writeFile(path.join(out,'lib/team-config.mjs'),'export default '+JSON.stringify(config)+';\n');
-await writeFile(path.join(out,'team-config.js'),'const trEnvironment = '+JSON.stringify({environment,fruitEnabled:config.fruitEnabled})+';\n');
+await writeFile(path.join(out,'team-config.js'),'const trEnvironment = '+JSON.stringify({environment,fruitEnabled:config.fruitEnabled,coaches:config.coaches||[]})+';\n');
 if(environment==='zaalvoetbal')await writeFile(path.join(out,'matches-seed.json'),'[]\n');
 // Publish only browser assets; server functions stay outside the public directory.
 await mkdir(path.join(out,'public'));

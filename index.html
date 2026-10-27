@@ -233,12 +233,15 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 <script src="/team-config.js"></script>
 <script>
 let parents=[];let current=null,ans={present:null,drive:null,seats:null,infoAnswer:null};let fruitState=null;
+let trActivityVisible=null;
 let trSavedAnswer=null,editMode=true,trChildText='';
 let childPresence={};
 function separateChildren(){return trEnvironment.environment==='zaalvoetbal'&&current?.children.length>1;}
 function renderChildPresence(){const box=document.getElementById('childPresenceCards');box.replaceChildren();if(!separateChildren())return;for(const child of current.children){const card=document.createElement('div');card.className='card question';const title=document.createElement('h3');title.textContent='Is '+child.split(' ')[0]+' aanwezig?';const opts=document.createElement('div');opts.className='opts';for(const value of ['Ja','Nee']){const button=document.createElement('button');button.className='opt'+(childPresence[child]===value?' active':'');button.textContent=value;button.onclick=()=>{childPresence[child]=value;renderChildPresence();};opts.append(button);}card.append(title,opts);box.append(card);}}
 function playerAnswers(p){return p.children.map(child=>({child,present:p.childPresence?.[child]??p.present}));}
 function go(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');location.hash=id;if(id==='coach')coach();if(id==='home')trRenderMatches();if(id==='coachpicker')trRenderCoachPicker();scrollTo(0,0)}
+if(typeof setInterval==='function')setInterval(()=>{if(trEnvironment.environment==='zaalvoetbal'){if(location.hash==='#home'||!location.hash)trRenderMatches();if(location.hash==='#coachpicker')trRenderCoachPicker();}},60000);
+addEventListener('visibilitychange',()=>{if(!document.hidden&&trEnvironment.environment==='zaalvoetbal'){if(location.hash==='#home'||!location.hash)trRenderMatches();if(location.hash==='#coachpicker')trRenderCoachPicker();}});
 addEventListener('hashchange',()=>{let id=location.hash.slice(1);if(document.getElementById(id))go(id)})
 function render(q=''){let box=document.getElementById('list');box.innerHTML='';parents.filter(p=>(p.name+' '+p.children.join(' ')).toLowerCase().includes(q.toLowerCase())).forEach(p=>{let b=document.createElement('button');b.className='person';let initials=p.name.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();b.innerHTML='<span class="avatar">'+initials+'</span><span><strong>'+p.name+'</strong><small>'+p.children.join(' & ')+'</small></span>';b.onclick=()=>select(p);box.appendChild(b)})}
 document.getElementById('search').oninput=e=>render(e.target.value)
@@ -404,7 +407,8 @@ data=await res.json();
 notice.textContent='Het actuele programma kon niet worden geladen. Je ziet het oorspronkelijke programma; latere wijzigingen kunnen ontbreken. Vernieuw de pagina om opnieuw te proberen.';
 notice.hidden=false;
 }
-const [{safeDisplayMatch},{transportHtml}]=await Promise.all([import('/lib/matches.mjs'),import('/lib/transport.mjs')]);
+const [{safeDisplayMatch},{transportHtml},{activityVisible}]=await Promise.all([import('/lib/matches.mjs'),import('/lib/transport.mjs'),import('/lib/activity-visibility.mjs')]);
+trActivityVisible=activityVisible;
 trTransportRenderer=transportHtml;
 trMatches.splice(0,trMatches.length,...data.map(safeDisplayMatch).sort((a,b)=>a.isoDate.localeCompare(b.isoDate)));
 trRenderMatches();
@@ -474,6 +478,7 @@ if(!trEnvironment.fruitEnabled||!fruitName){return ''}
 return '<div class="dashLine">🍎 Fruit · '+fruitName+'</div>'
 }
 function trCoachLine(coach){
+if(coach?.coaches)return trNamedCoachesLine(coach);
 if(!coach||!coach.present){return ''}
 if(coach.present==='Ja'){return '<div class="dashLine">🟢 Coach · Thijs</div>'}
 if(coach.substitute){return '<div class="dashLine">🟢 Coaching geregeld · '+coach.substitute+'</div>'}
@@ -580,6 +585,7 @@ const n=new Date();
 return n.getFullYear()+'-'+trPad2(n.getMonth()+1)+'-'+trPad2(n.getDate())
 }
 function trIsCurrentOrFuture(m){
+if(trEnvironment.environment==='zaalvoetbal'&&trActivityVisible)return trActivityVisible(m);
 if(!m||typeof m.isoDate!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(m.isoDate))return true;
 return m.isoDate>=trTodayISO()
 }
@@ -665,13 +671,14 @@ fruitState=null
 btn.disabled=false;
 trRenderFruitCard()
 }
+function trNamedCoachesLine(coach){return (trEnvironment.coaches||[]).map(name=>'<div class="dashLine">'+(coach.coaches[name]==='Ja'?'🟢':coach.coaches[name]==='Nee'?'🔴':'⚪')+' '+name+' · '+(coach.coaches[name]==='Ja'?'Aanwezig':coach.coaches[name]==='Nee'?'Afwezig':'Nog niet doorgegeven')+'</div>').join('');}
 let trCoachState={present:null,substitute:null};
 async function trLoadCoachControl(){
 if(!trActiveMatch){trRenderCoachControl();return}
 try{
 const res=await fetch('/api/coach?match='+encodeURIComponent(trActiveMatch.id));
 const data=await res.json();
-trCoachState={present:data&&data.present?data.present:null,substitute:data&&data.substitute?data.substitute:null}
+trCoachState={present:data&&data.present?data.present:null,substitute:data&&data.substitute?data.substitute:null,coaches:data?.coaches}
 }catch(e){trCoachState={present:null,substitute:null}}
 trRenderCoachControl()
 }
@@ -680,6 +687,10 @@ const card=document.getElementById('coachCard');
 if(!card)return;
 if(!trActiveMatch){card.classList.add('hidden');return}
 card.classList.remove('hidden');
+if(trEnvironment.coaches?.length){
+ card.replaceChildren();const title=document.createElement('h3');title.textContent='Wie is er als coach?';card.append(title);
+ for(const name of trEnvironment.coaches){const label=document.createElement('h4');label.textContent=name;const opts=document.createElement('div');opts.className='opts';for(const value of ['Ja','Nee']){const b=document.createElement('button');b.textContent=value==='Ja'?'Aanwezig':'Afwezig';b.className='opt'+(trCoachState.coaches?.[name]===value?' active':'');b.onclick=async()=>{b.disabled=true;try{const res=await fetch('/api/coach',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({matchId:trActiveMatch.id,coachName:name,present:value})});if(!res.ok)throw Error();await trLoadCoachControl();}catch{b.disabled=false;alert('Opslaan is niet gelukt. Probeer opnieuw.');}};opts.append(b);}card.append(label,opts);}return;
+}
 document.getElementById('coachYes').classList.toggle('active',trCoachState.present==='Ja');
 document.getElementById('coachNo').classList.toggle('active',trCoachState.present==='Nee');
 const subBlock=document.getElementById('coachSubBlock');
@@ -720,6 +731,7 @@ if(m.type==='info'){return '<div class="matchCard"><div class="matchTop"><div cl
 return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+trCardMeta(m)+'</div></div></div><div class="dashBlock">'+trTimingHtml(m)+'</div><div id="coachdash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" onclick="trOpenCoachMatch(\''+m.id+'\')">Coachstatus beheren</button></div>'
 }
 function trCoachPickerLine(coach){
+if(coach?.coaches)return trNamedCoachesLine(coach);
 if(coach&&coach.present==='Ja'){return '<div class="dashLine">🟢 Coach aanwezig · Thijs</div>'}
 if(coach&&coach.present==='Nee'&&coach.substitute){return '<div class="dashLine">🟠 Thijs afwezig</div><div class="dashSub">Coaching: '+coach.substitute+'</div>'}
 if(coach&&coach.present==='Nee'){return '<div class="dashLine">🔴 Coach afwezig</div><div class="dashSub">Nog geen vervangende coach</div>'}
@@ -736,8 +748,9 @@ if(el)el.innerHTML='<div class="dashSub">Kon status niet laden.</div>'
 }
 function trRenderCoachPicker(){
 let box=document.getElementById('coachMatchList');
-box.innerHTML=trMatches.map(m=>trCoachCardShell(m)).join('');
-trMatches.forEach(m=>{if(m.type!=='info'){trLoadCoachPickerCard(m)}})
+const shown=trEnvironment.environment==='zaalvoetbal'?trActiveMatches():trMatches;
+box.innerHTML=shown.map(m=>trCoachCardShell(m)).join('');
+shown.forEach(m=>{if(m.type!=='info'){trLoadCoachPickerCard(m)}})
 }
 function trOpenCoachMatch(id){
 trActiveMatch=trMatches.find(m=>m.id===id);

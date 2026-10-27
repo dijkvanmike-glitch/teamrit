@@ -5,5 +5,9 @@
   "logo": "hv-hoorn-logo.png",
   "fruitEnabled": false,
   "routeOrigin": null,
-  "gatheringDescription": "Verzamelpunt nog niet ingesteld. Kies voorlopig handmatig verzamelen."
+  "gatheringDescription": "Verzamelpunt nog niet ingesteld. Kies voorlopig handmatig verzamelen.",
+  "coaches": [
+    "Sherold",
+    "Colin"
+  ]
 }

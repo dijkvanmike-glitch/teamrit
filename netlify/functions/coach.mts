@@ -1,3 +1,5 @@
+import teamConfig from '../../lib/team-config.mjs';
+import {teamCoaches} from '../lib/team-coaches.mjs';
 import type { Context, Config } from "@netlify/functions";
 
 function supabaseHeaders() {
@@ -11,6 +13,7 @@ Authorization: `Bearer ${key}`,
 
 export default async (req: Request, context: Context) => {
 const base = Netlify.env.get("SUPABASE_URL");
+if(teamConfig.coaches?.length)return teamCoaches(req,base,supabaseHeaders(),teamConfig.coaches);
 
 if (req.method === "GET") {
 const url = new URL(req.url);
