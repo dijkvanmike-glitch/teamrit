@@ -359,7 +359,7 @@ document.querySelector('#coach h3').textContent=isInfo?('Informatiemoment · '+t
 document.getElementById('transportOverview').innerHTML='';
 document.getElementById('rows').innerHTML='<tr><td colspan="5">Laden...</td></tr>';
 document.getElementById('infoRows').innerHTML='Laden...';
-if(!isInfo){trLoadCoachControl()}
+if(!isInfo&&trActiveMatch?.type!=='training'){trLoadCoachControl()}else{document.getElementById('coachCard').classList.add('hidden')}
 if(!trActiveMatch){document.getElementById('rows').innerHTML='<tr><td colspan="5">Kies eerst een wedstrijd.</td></tr>';return}
 let data=[];
 try{const res=await fetch('/api/overview?match='+encodeURIComponent(trActiveMatch.id));data=await res.json()}catch(e){document.getElementById('rows').innerHTML='<tr><td colspan="5">Kon overzicht niet laden.</td></tr>';document.getElementById('infoRows').innerHTML='Kon overzicht niet laden.';return}
@@ -552,7 +552,7 @@ html+=trTimingHtml(m);
 html+=trResponseHtml(list);
 if(!m.home){html+=trTransportHtml(list,m)}
 html+=trFruitLine(fruitName);
-html+=trCoachLine(coach);
+if(m.type!=='training')html+=trCoachLine(coach);
 if(!m.home){html+=trMapsHtml(m)}
 return html
 }
@@ -690,7 +690,7 @@ trRenderCoachControl()
 function trRenderCoachControl(){
 const card=document.getElementById('coachCard');
 if(!card)return;
-if(!trActiveMatch){card.classList.add('hidden');return}
+if(!trActiveMatch||trActiveMatch.type==='training'){card.classList.add('hidden');return}
 card.classList.remove('hidden');
 if(trEnvironment.coaches?.length){
  card.replaceChildren();const title=document.createElement('h3');title.textContent='Wie is er als coach?';card.append(title);
@@ -733,7 +733,7 @@ await fetch('/api/coach',{method:'POST',headers:{'content-type':'application/jso
 }
 function trCoachCardShell(m){
 if(m.type==='info'){return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><span class="infoTag">Informatiemoment</span><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div></div></div><button class="organizeBtn" onclick="trOpenCoachMatch(\''+m.id+'\')">Bekijk overzicht</button></div>'}
-return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+trCardMeta(m)+'</div></div></div><div class="dashBlock">'+trTimingHtml(m)+'</div><div id="coachdash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" onclick="trOpenCoachMatch(\''+m.id+'\')">Coachstatus beheren</button></div>'
+return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+trCardMeta(m)+'</div></div></div><div class="dashBlock">'+trTimingHtml(m)+'</div><div id="coachdash-'+m.id+'" class="dashBlock">'+(m.type==='training'?'':'<div class="dashSub">Status laden...</div>')+'</div><button class="organizeBtn" onclick="trOpenCoachMatch(\''+m.id+'\')">'+(m.type==='training'?'Bekijk overzicht':'Coachstatus beheren')+'</button></div>'
 }
 function trCoachPickerLine(coach){
 if(coach?.coaches)return trNamedCoachesLine(coach);
@@ -744,6 +744,7 @@ return '<div class="dashSub">Coachstatus nog niet ingevuld</div>'
 }
 async function trLoadCoachPickerCard(m){
 const el=document.getElementById('coachdash-'+m.id);
+if(m.type==='training'){if(el)el.replaceChildren();return;}
 try{
 const co=await fetch('/api/coach?match='+encodeURIComponent(m.id)).then(r=>r.json());
 if(el)el.innerHTML=trCoachPickerLine(co)
