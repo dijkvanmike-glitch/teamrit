@@ -671,7 +671,12 @@ fruitState=null
 btn.disabled=false;
 trRenderFruitCard()
 }
-function trNamedCoachesLine(coach){return (trEnvironment.coaches||[]).map(name=>'<div class="dashLine">'+(coach.coaches[name]==='Ja'?'🟢':coach.coaches[name]==='Nee'?'🔴':'⚪')+' '+name+' · '+(coach.coaches[name]==='Ja'?'Aanwezig':coach.coaches[name]==='Nee'?'Afwezig':'Nog niet doorgegeven')+'</div>').join('');}
+function trNamedCoachesLine(coach){
+const values=Object.values(coach.coaches||{});
+if(values.includes('Ja'))return '<div class="dashLine">🟢 Coach aanwezig</div>';
+if(values.length&&values.every(v=>v==='Nee'))return '<div class="dashLine">🔴 Nog geen coach beschikbaar</div>';
+return '<div class="dashSub">Coachstatus nog niet ingevuld</div>';
+}
 let trCoachState={present:null,substitute:null};
 async function trLoadCoachControl(){
 if(!trActiveMatch){trRenderCoachControl();return}
