@@ -12,7 +12,7 @@ if(config.routeOrigin!==null&&!/^[-\d.]+,[-\d.]+$/.test(config.routeOrigin))thro
 const out=path.join(root,'dist');
 await rm(out,{recursive:true,force:true});await mkdir(out);
 for(const file of ['index.html','admin.html','admin.css','admin.mjs','_headers','lib','netlify','matches-seed.json',config.logo])await cp(path.join(root,file),path.join(out,file),{recursive:true});
-if(environment==='zaalvoetbal')for(const file of ['veerhuys-theme.css','og-preview-veerhuys-v1.jpg'])await cp(path.join(root,file),path.join(out,file));
+if(environment==='zaalvoetbal')for(const file of ['veerhuys-theme.css','og-preview-veerhuys-v2.jpg'])await cp(path.join(root,file),path.join(out,file));
 if(environment==='hockey')for(const file of ['og-preview.jpg','og-preview-v2.jpg'])await cp(path.join(root,file),path.join(out,file));
 for(const file of ['index.html','admin.html','admin.mjs','lib/matches.mjs']){
  let text=await readFile(path.join(out,file),'utf8');
@@ -52,13 +52,13 @@ function trTimingHtml(m){`)
    text=text.replace('</head>',`<meta property="og:url" content="${site}">
 <meta property="og:site_name" content="TeamRit">
 <meta property="og:locale" content="nl_NL">
-<meta property="og:image" content="${site}og-preview-veerhuys-v1.jpg">
-<meta property="og:image:secure_url" content="${site}og-preview-veerhuys-v1.jpg">
+<meta property="og:image" content="${site}og-preview-veerhuys-v2.jpg">
+<meta property="og:image:secure_url" content="${site}og-preview-veerhuys-v2.jpg">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="HV Hoorn · Hovocubo-Veerhuys clublogo">
-<meta name="twitter:image" content="${site}og-preview-veerhuys-v1.jpg">
+<meta name="twitter:image" content="${site}og-preview-veerhuys-v2.jpg">
 </head>`);
   }
  }
@@ -69,5 +69,5 @@ await writeFile(path.join(out,'team-config.js'),'const trEnvironment = '+JSON.st
 if(environment==='zaalvoetbal')await writeFile(path.join(out,'matches-seed.json'),'[]\n');
 // Publish only browser assets; server functions stay outside the public directory.
 await mkdir(path.join(out,'public'));
-for(const file of ['index.html','admin.html','admin.css','admin.mjs','_headers','lib','matches-seed.json','team-config.js',config.logo,...(environment==='hockey'?['og-preview.jpg','og-preview-v2.jpg']:['veerhuys-theme.css','og-preview-veerhuys-v1.jpg'])])await cp(path.join(out,file),path.join(out,'public',file),{recursive:true});
+for(const file of ['index.html','admin.html','admin.css','admin.mjs','_headers','lib','matches-seed.json','team-config.js',config.logo,...(environment==='hockey'?['og-preview.jpg','og-preview-v2.jpg']:['veerhuys-theme.css','og-preview-veerhuys-v2.jpg'])])await cp(path.join(out,file),path.join(out,'public',file),{recursive:true});
 console.log('Gebouwd: '+environment+' → dist (geen publicatie uitgevoerd)');
