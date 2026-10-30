@@ -344,15 +344,16 @@ go('done')
 }catch(e){alert('Opslaan is niet gelukt. Controleer je internetverbinding en probeer het nogmaals.')}
 finally{btn.disabled=false;btn.textContent=isInfo?'Opslaan':'Doorgeven'}
 }
-function badge(v){if(!v)return'<span class="badge empty">–</span>';return'<span class="badge '+(v==='Ja'?'yes':'no')+'">'+v+'</span>'}
+function badge(v){if(!v)return'<span class="badge empty">'+(trEnvironment.environment==='zaalvoetbal'?'Nog niet':'–')+'</span>';return'<span class="badge '+(v==='Ja'?'yes':'no')+'">'+v+'</span>'}
 async function coach(){
+if(!trActiveMatch){go('coachpicker');return}
 const isHome=!!(trActiveMatch&&trActiveMatch.home);
 const isInfo=!!(trActiveMatch&&trActiveMatch.type==='info');
 document.getElementById('coach').classList.toggle('hideTransport',isHome||isInfo);
 document.getElementById('coachCard').classList.toggle('hidden',isInfo||!trEnvironment.fruitEnabled);
-document.getElementById('stats').classList.toggle('hidden',isInfo||!trEnvironment.fruitEnabled);
+document.getElementById('stats').classList.toggle('hidden',isInfo);
 document.getElementById('infoStats').classList.toggle('hidden',!isInfo);
-document.getElementById('rowsCard').classList.toggle('hidden',isInfo||!trEnvironment.fruitEnabled);
+document.getElementById('rowsCard').classList.toggle('hidden',isInfo);
 document.getElementById('infoRowsCard').classList.toggle('hidden',!isInfo);
 document.getElementById('coachEyebrow').textContent=isInfo?'Informatiemoment':'Teamoverzicht';
 document.querySelector('#coach h3').textContent=isInfo?('Informatiemoment · '+trActiveMatch.date):('Teamoverzicht'+(trActiveMatch?' · '+trActiveMatch.date:' JO14-1'));
