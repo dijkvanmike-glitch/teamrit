@@ -20,7 +20,7 @@ test('both deployments preserve hockey and exclude hockey data and fruit in futs
    assert.equal(config.fruitEnabled,false);assert.deepEqual(seed,[]);
    assert.doesNotMatch(page,/WFHC|JO14-1|wfhc-teamrit|wfhc-logo|Thijs/);
    assert.ok(page.includes('/'+config.logo));
-   assert.ok(page.includes('property="og:image" content="https://teamrit-zaalvoetbal.netlify.app/og-preview-veerhuys-v2.jpg'));
+   assert.ok(page.includes('property="og:image" content="https://teamrit-zaalvoetbal.netlify.app/og-preview-veerhuys-v3.jpg'));
    // Config is cached by module URL; this futsal import runs first in a fresh test process.
    const alerts=await import(pathToFileURL(path.join(out,'lib/admin-alerts.mjs')));
    assert.deepEqual(alerts.outstanding({home:true},[{familyKey:'1',present:'Ja'}],null),[]);
