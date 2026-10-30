@@ -554,7 +554,7 @@ html+=trResponseHtml(list);
 if(!m.home){html+=trTransportHtml(list,m)}
 html+=trFruitLine(fruitName);
 if(m.type!=='training')html+=trCoachLine(coach);
-if(!m.home){html+=trMapsHtml(m)}
+if(!m.home||m.type==='training'){html+=trMapsHtml(m)}
 return html
 }
 async function trLoadCard(m){
