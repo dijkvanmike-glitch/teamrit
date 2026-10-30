@@ -17,7 +17,7 @@ test('both deployments preserve hockey and exclude hockey data and fruit in futs
   assert.doesNotMatch(await readFile(path.join(out,'public/index.html'),'utf8'),/undefined/);
   const api=(await import(pathToFileURL(path.join(out,'netlify/functions/fruit.mts'))+'?'+environment)).default;
   if(environment==='zaalvoetbal'){
-   assert.equal(config.fruitEnabled,false);assert.deepEqual(seed,[]);
+   assert.equal(config.fruitEnabled,false);assert.equal(seed.length,1);assert.equal(seed[0].isoDate,'2026-12-21');assert.equal(seed[0].time,'13:00');assert.equal(seed[0].type,'training');assert.match(seed[0].note,/Stefan Dol/);
    assert.doesNotMatch(page,/WFHC|JO14-1|wfhc-teamrit|wfhc-logo|Thijs/);
    assert.ok(page.includes('/'+config.logo));
    assert.ok(page.includes('property="og:image" content="https://teamrit-zaalvoetbal.netlify.app/og-preview-veerhuys-v3.jpg'));

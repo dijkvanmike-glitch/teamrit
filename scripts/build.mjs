@@ -66,7 +66,7 @@ function trTimingHtml(m){`)
 }
 await writeFile(path.join(out,'lib/team-config.mjs'),'export default '+JSON.stringify(config)+';\n');
 await writeFile(path.join(out,'team-config.js'),'const trEnvironment = '+JSON.stringify({environment,fruitEnabled:config.fruitEnabled,coaches:config.coaches||[]})+';\n');
-if(environment==='zaalvoetbal')await writeFile(path.join(out,'matches-seed.json'),'[]\n');
+if(environment==='zaalvoetbal')await cp(path.join(root,'environments/zaalvoetbal-seed.json'),path.join(out,'matches-seed.json'));
 // Publish only browser assets; server functions stay outside the public directory.
 await mkdir(path.join(out,'public'));
 for(const file of ['index.html','admin.html','admin.css','admin.mjs','_headers','lib','matches-seed.json','team-config.js',config.logo,...(environment==='hockey'?['og-preview.jpg','og-preview-v2.jpg']:['veerhuys-theme.css','og-preview-veerhuys-v3.jpg'])])await cp(path.join(out,file),path.join(out,'public',file),{recursive:true});
