@@ -457,7 +457,7 @@ if(showTravel&&typeof m.travelMinutes==='number')html+='<div class="dashSub">�
 return html
 }
 function trTimingHtml(m){
-if(m.type==='training')return '<div class="dashLine">⚽ Training · '+m.time+'–'+m.endTime+'</div>';
+if(m.type==='training')return '<div class="dashLine">⚽ Training · '+m.time+(m.endTime?'–'+m.endTime:'')+'</div>';
 if(m.type==='info')return'';
 if(!m.home)return trAwayTimingHtml(m,true);
 const gathering=m.departOverride||(m.time?trMinusMinutes(m.time,60):null);

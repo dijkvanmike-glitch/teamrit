@@ -7,3 +7,11 @@ test('training retains end time through storage and renders without a fictitious
  assert.equal(m.type,'training');assert.equal(m.endTime,'11:00');assert.match(displayMatch(m).teams,/^Training ·/);assert.match(displayMatch(m).meta,/10:00–11:00/);
  assert.throws(()=>validateFields({...data,endTime:'09:00'}));
 });
+
+test('training can have a start time with an unknown end time',()=>{
+ const data=validateFields({isoDate:'2026-12-21',home:true,opponent:'Training met Stefan Dol',time:'13:00',type:'training'});
+ assert.equal(data.endTime,undefined);
+ const shown=displayMatch(data);
+ assert.ok(shown.meta.includes('13:00'));
+ assert.ok(!shown.meta.includes('undefined'));
+});

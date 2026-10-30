@@ -37,7 +37,7 @@ return '<div class="timingRow"><span class="timingLabel">'+(split<0?clean:clean.
 function trTimingHtml(m){`)
     .replace('html+=trTimingHtml(m);','html+=trTimingDisplay(trTimingHtml(m));')
     .replace("'+trTimingHtml(m)+'","'+trTimingDisplay(trTimingHtml(m))+'")
-    .replace("part!==m.time&&", "part!==m.time&&part!==m.time+'–'+m.endTime&&")
+    .replace("part!==m.time&&", "part!==m.time&&part!==m.time+(m.endTime?'–'+m.endTime:'')&&")
     .replace("<div class=\"matchMeta\">'+m.meta+'</div>'+trMapsHtml(m)","<div class=\"matchMeta\">'+trCardMeta(m)+'</div><div class=\"dashBlock\">'+trTimingDisplay(trTimingHtml(m))+'</div>'+trMapsHtml(m)");
    const a=text.indexOf('let body;',text.indexOf('function trMatchContextHtml'));
    const b=text.indexOf('\nfunction trSameChildSet',a);
