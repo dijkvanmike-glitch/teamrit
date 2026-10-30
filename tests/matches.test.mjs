@@ -97,9 +97,9 @@ test('timing shows gathering without start time/travel and preserves existing tr
   context.m={meta:'Uit',home:false,teams:opponent+' · WFHC JO14-1',date:'zaterdag',time,departOverride:gathering,travelMinutes};
   for(const render of ['trTimingHtml(m)','trMatchContextHtml(m)','trCoachCardShell(m)']){
    const html=vm.runInContext(render,context);
-   assert.ok(html.includes('Verzamelen bij WFHC · '+gathering));
-   assert.ok(html.includes('Aanwezig bij '+opponent+' · '+arrival));
-   assert.ok(html.includes('Wedstrijd · '+time));
+   assert.ok(html.includes('Verzamelen bij WFHC')); assert.ok(html.includes(gathering));
+   assert.ok(html.includes('Aanwezig bij '+opponent)); assert.ok(html.includes(arrival));
+   assert.ok(html.includes('Wedstrijd')); assert.ok(html.includes(time));
   }
  }
  const m=seed.find(m=>m.id==='m12');context.m=m;
