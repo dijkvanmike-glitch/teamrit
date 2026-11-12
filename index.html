@@ -438,7 +438,7 @@ return parts.find(t=>!t.toUpperCase().includes('WFHC'))||parts[0]
 function trAwayTimingHtml(m,showTravel=false){
 const departWfhc=m.departOverride||(m.time&&typeof m.travelMinutes==='number'?trFloorTo5(trMinusMinutes(m.time,45+m.travelMinutes)):null);
 let html='<div class="dashLine">🚗 Verzamelen bij WFHC · '+(departWfhc||'Tijd volgt')+'</div>';
-html+='<div class="dashLine">📍 Aanwezig bij '+trOpponentName(m)+' · '+(m.time?trMinusMinutes(m.time,45):'Tijd volgt')+'</div>';
+html+='<div class="dashLine">📍 Aanwezig bij '+trOpponentName(m)+' · '+(m.time&&(m.gatheringMode!=='manual'||m.departOverride)?trMinusMinutes(m.time,45):'Tijd volgt')+'</div>';
 html+='<div class="dashLine">🏑 Wedstrijd · '+(m.time||'Tijd volgt')+'</div>';
 if(showTravel&&typeof m.travelMinutes==='number')html+='<div class="dashSub">🗺️ Reistijd · ±'+m.travelMinutes+' min</div>';
 return html
@@ -499,7 +499,7 @@ body='<div class="dashLine">🏑 Wedstrijd · '+m.time+'</div>';
 if(m.departOverride&&(m.home||typeof m.travelMinutes!=='number')){
 body+='<div class="dashLine">'+(m.home?'📍':'🚗')+' Verzamelen WFHC · '+m.departOverride+'</div>'
 }else if(m.home){
-body+='<div class="dashLine">📍 Verzamelen WFHC · '+trMinusMinutes(m.time,60)+'</div>'
+body+=m.gatheringMode==='manual'?'<div class="dashLine">🕒 Verzameltijd volgt</div>':'<div class="dashLine">📍 Verzamelen WFHC · '+trMinusMinutes(m.time,60)+'</div>'
 }else if(typeof m.travelMinutes==='number'){
 const departWfhc=m.departOverride||trFloorTo5(trMinusMinutes(m.time,45+m.travelMinutes));
 const arriveOpp=trMinusMinutes(m.time,45);
