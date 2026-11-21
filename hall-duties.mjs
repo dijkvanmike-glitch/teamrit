@@ -1,7 +1,7 @@
-import { dutyBlocks, dutySlotsHtml, dutySummary, validDutyRows } from './lib/hall-duties.mjs';
+import { dutyBlocks, dutyTitle, dutyIntro, dutySlotsHtml, dutySummary, validDutyRows } from './lib/hall-duties.mjs';
 let active=null,rows=[],generation=0,busy=false;
 const el=id=>document.getElementById(id);
-export function buttonHtml(m){return dutyBlocks.has(m.id)?'<div class="dashSub" id="duty-summary-'+m.id+'" style="margin-top:16px">Zaaldiensten laden…</div><button class="secondary" style="margin-top:10px" onclick="trOpenDuties(\''+m.id+'\')">Zaaldienst &amp; scheidsrechters</button>':''}
+export function buttonHtml(m){return dutyBlocks.has(m.id)?'<div class="dashSub" id="duty-summary-'+m.id+'" style="margin-top:16px">Inschrijvingen laden…</div><button class="secondary" style="margin-top:10px" onclick="trOpenDuties(\''+m.id+'\')">'+dutyTitle(m.id)+'</button>':''}
 export async function loadBadge(id){
   if(!dutyBlocks.has(id))return;
   const target=el('duty-summary-'+id);if(!target)return;
@@ -16,6 +16,7 @@ async function load(){const id=active,version=++generation;el('dutySlots').inner
 export function open(m,roster,go,contextHtml){
  if(!dutyBlocks.has(m.id))return;active=m.id;rows=[];busy=false;
  el('dutyContext').innerHTML=contextHtml;
+ el('dutyTitle').textContent=dutyTitle(m.id);el('dutyIntro').textContent=dutyIntro(m.id);
  el('dutyName').replaceChildren(new Option('Kies je naam',''),...roster.map(p=>new Option(p.name,p.name)));el('dutyName').disabled=false;
  try{const name=localStorage.getItem('lastDutyParent')||localStorage.getItem('lastSelectedParent');if(roster.some(p=>p.name===name))el('dutyName').value=name}catch{}
  el('dutyName').onchange=()=>{try{localStorage.setItem('lastDutyParent',el('dutyName').value)}catch{}render()};
