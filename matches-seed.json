@@ -143,25 +143,14 @@
     "mapsQuery": "Van Loenenlaan 3 Beverwijk"
   },
   {
-    "id": "match-1ce1df5e-ddbc-4ba9-a258-7f1e67c15bfe",
-    "isoDate": "2027-01-23",
-    "home": true,
-    "opponent": "Alkmaarsche M.H.C. Alkmaar JO14-2",
-    "time": "13:40",
-    "gathering": "12:25",
-    "gatheringMode": "manual",
-    "location": "Kers, Moerbalk 1, 1628 GW Hoorn",
-    "note": "Zaalhockey · Veld 1, Vinyl · Zaalleiding: Hoorn (WFHC)"
-  },
-  {
     "id": "match-db7c6d63-8bec-42b2-a1a6-01805adf1715",
     "isoDate": "2027-01-23",
     "home": true,
-    "opponent": "Z.H.C. De Kraaien JO14-1",
+    "opponent": "Z.H.C. De Kraaien JO14-1 en Alkmaarsche M.H.C. Alkmaar JO14-2",
     "time": "12:00",
     "gathering": "10:45",
     "gatheringMode": "manual",
     "location": "Kers, Moerbalk 1, 1628 GW Hoorn",
-    "note": "Zaalhockey · Veld 1, Vinyl · Zaalleiding: Hoorn (WFHC)"
+    "note": "Zaalhockey: 12:00 WFHC – Z.H.C. De Kraaien JO14-1; 13:40 WFHC – Alkmaarsche M.H.C. Alkmaar JO14-2. Veld 1, Vinyl. Zaalleiding: Hoorn (WFHC). Eén aanmelding voor beide wedstrijden."
   }
 ]
