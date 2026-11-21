@@ -152,5 +152,16 @@
     "gatheringMode": "manual",
     "location": "Kers, Moerbalk 1, 1628 GW Hoorn",
     "note": "Zaalhockey · Veld 1, Vinyl · Zaalleiding: Hoorn (WFHC)"
+  },
+  {
+    "id": "match-db7c6d63-8bec-42b2-a1a6-01805adf1715",
+    "isoDate": "2027-01-23",
+    "home": true,
+    "opponent": "Z.H.C. De Kraaien JO14-1",
+    "time": "12:00",
+    "gathering": "10:45",
+    "gatheringMode": "manual",
+    "location": "Kers, Moerbalk 1, 1628 GW Hoorn",
+    "note": "Zaalhockey · Veld 1, Vinyl · Zaalleiding: Hoorn (WFHC)"
   }
 ]
