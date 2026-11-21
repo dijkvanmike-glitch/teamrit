@@ -1,6 +1,6 @@
 import {test,beforeEach} from 'node:test';import assert from 'node:assert/strict';
 import handler from '../netlify/functions/hall-duties.mts';
-import {dutyBlocks,dutySlotsHtml,dutySummary,validDutyRows} from '../lib/hall-duties.mjs';
+import {dutyBlocks,dutySlotsHtml,dutySummary,awayDutyBlocks,dutyIntro,validDutyRows} from '../lib/hall-duties.mjs';
 const id=[...dutyBlocks][0];let rows,mode,calls;
 globalThis.Netlify={env:{get:k=>({SUPABASE_URL:'https://storage.test',SUPABASE_ANON_KEY:'test'})[k]}};
 beforeEach(()=>{mode='';calls=[];rows=['hall','referee'].flatMap(role=>[1,2].map(slot_no=>({match_id:id,role,slot_no,parent_name:null,revision:0})));});
@@ -10,7 +10,7 @@ globalThis.fetch=async(url,init={})=>{calls.push([String(url),init.method||'GET'
  if(b.p_claim&&rows.some(r=>r.role===b.p_role&&r.parent_name===b.p_name))return Response.json({code:'23505'},{status:409});
  r.parent_name=b.p_claim?b.p_name:null;r.revision++;return Response.json([r]);};
 const req=(b,origin='https://teamrit.test')=>new Request('https://teamrit.test/api/hall-duties',{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify({matchId:id,role:'hall',slot:1,name:'Parent A',revision:0,claim:true,...b})});
-test('preserves all stored slots, only two target blocks; missing storage never appears empty',async()=>{assert.equal(dutyBlocks.size,2);let r=await handler(new Request('https://teamrit.test/api/hall-duties?match='+id));assert.equal(r.status,200);assert.ok(validDutyRows(await r.json(),id));mode='missing';assert.equal((await handler(new Request('https://teamrit.test/api/hall-duties?match='+id))).status,502)});
+test('preserves all stored slots, only five hall blocks; missing storage never appears empty',async()=>{assert.equal(dutyBlocks.size,5);let r=await handler(new Request('https://teamrit.test/api/hall-duties?match='+id));assert.equal(r.status,200);assert.ok(validDutyRows(await r.json(),id));mode='missing';assert.equal((await handler(new Request('https://teamrit.test/api/hall-duties?match='+id))).status,502)});
 test('simultaneous claims, double signup, wrong cancellation and stale edits cannot overwrite',async()=>{
  const out=await Promise.all([handler(req({})),handler(req({name:'Parent B'}))]);assert.deepEqual(out.map(r=>r.status),[200,409]);assert.equal(rows[0].parent_name,'Parent A');
  assert.equal((await handler(req({slot:2}))).status,409);
@@ -42,4 +42,18 @@ test('one referee and two hall slots; extra referee claims rejected, legacy sign
  assert.equal((await handler(req({role:'referee',slot:2,claim:false}))).status,200);
  assert.equal((await handler(req({role:'referee',name:'Parent B'}))).status,200);
  assert.equal((await handler(req({role:'referee',name:'Parent C'}))).status,409);
+});
+
+test('each away hall block has exactly one referee, no hall duty, and signup/cancellation work',async()=>{
+ for(const awayId of awayDutyBlocks){
+ rows=[{match_id:awayId,role:'referee',slot_no:1,parent_name:null,revision:0}];
+ const res=await handler(new Request('https://teamrit.test/api/hall-duties?match='+awayId));assert.equal(res.status,200);assert.ok(validDutyRows(await res.json(),awayId));
+ assert.equal(validDutyRows([...rows,{...rows[0],role:'hall'}],awayId),false);
+ assert.equal(dutySummary(rows),'Scheidsrechter: 0/1');assert.ok(!dutySlotsHtml(rows,'Parent A').includes('Zaaldienst'));
+ assert.match(dutyIntro(awayId),/hele blok/);
+ assert.equal((await handler(req({matchId:awayId,role:'hall'}))).status,400);
+ assert.equal((await handler(req({matchId:awayId,role:'referee'}))).status,200);
+ assert.equal((await handler(req({matchId:awayId,role:'referee',name:'Parent B'}))).status,409);
+ assert.equal((await handler(req({matchId:awayId,role:'referee',revision:1,claim:false}))).status,200);
+ }
 });

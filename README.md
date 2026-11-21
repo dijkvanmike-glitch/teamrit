@@ -89,3 +89,5 @@ de vaste plekentabel en controleert de naam in `parents`.
 `node tests/serve.mjs` bevat uitsluitend fictieve dienstinschrijvingen in geheugen.
 
 Correctie 21 november: `20261121191942_one_referee_per_block.sql` beperkt nieuwe scheidsrechterinschrijvingen tot één per blok, ook bij gelijktijdige verzoeken. De eerdere tweede plek blijft opgeslagen maar gesloten. Eventuele eerdere inschrijvingen blijven zichtbaar en kunnen worden afgemeld. Voer deze aanvullende migratie vóór de apppublicatie uit.
+
+Uitzaalblokken op 6, 13 en 20 december 2026 krijgen elk één scheidsrechterplek voor het hele blok, zonder zaaldienst. Voer `supabase/migrations/20261121193349_away_hall_referees.sql` uit vóór publicatie. Dit voegt alleen drie lege plekken toe en verruimt de toegestane blok-ID’s; bestaande rijen en rechten blijven intact. De bestaande RPC en limiet van één scheidsrechter blijven van toepassing.
