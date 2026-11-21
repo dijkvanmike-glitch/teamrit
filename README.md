@@ -69,7 +69,7 @@ De controle vernieuwt elke minuut zolang de beheerpagina zichtbaar is, bij terug
 
 ### Zaaldienst en scheidsrechters (23 januari en 6 februari 2027)
 
-Beide zaalblokken hebben twee plekken voor zaaldienst en twee voor scheidsrechters,
+Beide zaalblokken hebben twee plekken voor zaaldienst en één voor een scheidsrechter,
 voor het hele blok. De knop op de wedstrijdkaart en in de coachkeuzelijst opent
 het overzicht. Ouders kiezen hun eigen naam, schrijven zich in en kunnen hun eigen
 inschrijving weer vrijgeven; dit staat los van aanwezigheid en fruit.
@@ -87,3 +87,5 @@ de vaste plekentabel en controleert de naam in `parents`.
 
 `node --test tests/*.test.mjs` test ook validatie, conflicten, afmelden en foutmeldingen.
 `node tests/serve.mjs` bevat uitsluitend fictieve dienstinschrijvingen in geheugen.
+
+Correctie 21 november: `20261121191942_one_referee_per_block.sql` beperkt nieuwe scheidsrechterinschrijvingen tot één per blok, ook bij gelijktijdige verzoeken. De eerdere tweede plek blijft opgeslagen maar gesloten. Eventuele eerdere inschrijvingen blijven zichtbaar en kunnen worden afgemeld. Voer deze aanvullende migratie vóór de apppublicatie uit.
