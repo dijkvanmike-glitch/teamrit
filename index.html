@@ -112,6 +112,7 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 .location{margin-top:14px} .details{grid-template-columns:1fr 1fr} .homeActions{grid-template-columns:1fr}
 .stats{grid-template-columns:1fr 1fr} table{font-size:12px} th,td{padding:9px 5px}
 }
+#dutyRetry[hidden]{display:none}.dutySlot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0;border-top:1px solid #dce5ef}.dutySlot>div{min-width:0;overflow-wrap:anywhere}.dutySlot button{width:auto;flex-shrink:0;padding:12px}
 </style>
 <link rel="stylesheet" href="/wfhc-theme.css">
 </head>
@@ -132,6 +133,16 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 <p id="scheduleNotice" role="status" hidden style="padding:12px;background:#fff3d6;border-radius:10px"></p>
 <div id="matchList" class="matchList"></div>
 <div class="footer">Geen app nodig · gewoon via de WhatsApp-link</div>
+</section>
+
+<section id="duties" class="screen">
+<button class="backLink" onclick="go('home')">← Mijn wedstrijden</button>
+<div id="dutyContext"></div>
+<div class="card"><h2>Zaaldienst &amp; scheidsrechters</h2>
+<p>Voor dit zaalblok zoeken we 2 ouders voor zaaldienst en 2 scheidsrechters. Je meldt je aan voor het hele blok.</p>
+<label for="dutyName">Wie schrijft zich in?</label><select id="dutyName" style="display:block;width:100%;padding:14px;margin-top:10px;font:inherit"></select>
+<p id="dutyStatus" role="status" aria-live="polite"></p><button id="dutyRetry" class="secondary" hidden>Opnieuw proberen</button></div>
+<div id="dutySlots"></div>
 </section>
 
 <section id="ouder" class="screen">
@@ -233,7 +244,7 @@ th{font-size:12px;color:var(--muted);text-transform:uppercase}
 <script>
 let parents=[];let current=null,ans={present:null,drive:null,seats:null,infoAnswer:null};let fruitState=null;
 let trSavedAnswer=null,editMode=true,trChildText='';
-function go(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');location.hash=id;if(id==='coach')coach();if(id==='home')trRenderMatches();if(id==='coachpicker')trRenderCoachPicker();scrollTo(0,0)}
+function go(id){if(id==='duties'&&!document.getElementById('dutyContext').children.length)id='home';document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');location.hash=id;if(id==='coach')coach();if(id==='home')trRenderMatches();if(id==='coachpicker')trRenderCoachPicker();scrollTo(0,0)}
 addEventListener('hashchange',()=>{let id=location.hash.slice(1);if(document.getElementById(id))go(id)})
 function render(q=''){let box=document.getElementById('list');box.innerHTML='';parents.filter(p=>(p.name+' '+p.children.join(' ')).toLowerCase().includes(q.toLowerCase())).forEach(p=>{let b=document.createElement('button');b.className='person';let initials=p.name.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();b.innerHTML='<span class="avatar">'+initials+'</span><span><strong>'+p.name+'</strong><small>'+p.children.join(' & ')+'</small></span>';b.onclick=()=>select(p);box.appendChild(b)})}
 document.getElementById('search').oninput=e=>render(e.target.value)
@@ -396,7 +407,8 @@ data=await res.json();
 notice.textContent='Het actuele programma kon niet worden geladen. Je ziet het oorspronkelijke programma; latere wijzigingen kunnen ontbreken. Vernieuw de pagina om opnieuw te proberen.';
 notice.hidden=false;
 }
-const [{safeDisplayMatch,compareMatches},{transportHtml}]=await Promise.all([import('/lib/matches.mjs'),import('/lib/transport.mjs')]);
+const [{safeDisplayMatch,compareMatches},{transportHtml},duties]=await Promise.all([import('/lib/matches.mjs'),import('/lib/transport.mjs'),import('/hall-duties.mjs')]);
+trDutyUI=duties;
 trTransportRenderer=transportHtml;
 trMatches.splice(0,trMatches.length,...data.map(safeDisplayMatch).sort(compareMatches));
 trRenderMatches();
@@ -412,7 +424,7 @@ return m.meta.split('·').map(part=>part.trim()).filter(part=>part!==m.time&&par
 }
 function trCardShell(m){
 if(m.type==='info'){return trInfoCardShell(m)}
-return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+trCardMeta(m)+'</div></div></div><div id="dash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" id="cta-'+m.id+'" onclick="trOpenMatch(\''+m.id+'\')">Geef door</button></div>'
+return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+trCardMeta(m)+'</div></div></div><div id="dash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" id="cta-'+m.id+'" onclick="trOpenMatch(\''+m.id+'\')">Geef door</button>'+trDutyButton(m)+'</div>'
 }
 function trInfoCardShell(m){
 return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><span class="infoTag">Informatiemoment</span><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div><div class="dashSub" style="margin-top:6px">'+m.desc+'</div></div></div><div id="dash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" id="cta-'+m.id+'" onclick="trOpenMatch(\''+m.id+'\')">Geef door</button></div>'
@@ -464,6 +476,9 @@ let responded=list.filter(p=>p.present||p.drive).length;
 let present=list.filter(p=>p.present==='Ja').length;
 return '<div class="stats" style="grid-template-columns:repeat(2,1fr)"><div class="stat"><span>Gereageerd</span><strong>'+responded+' van '+total+'</strong></div><div class="stat"><span>Aanwezig</span><strong>'+present+'</strong></div></div>'
 }
+let trDutyUI=null;
+function trDutyButton(m){return trDutyUI?trDutyUI.buttonHtml(m):''}
+function trOpenDuties(id){const m=trMatches.find(m=>m.id===id);if(m&&trDutyUI)trDutyUI.open(m,parents,go,trMatchContextHtml(m))}
 let trTransportRenderer=null;
 function trTransportHtml(list,m){
 if(trTransportRenderer)return trTransportRenderer(list,m);
@@ -591,7 +606,7 @@ box.innerHTML='<div class="matchCard"><div class="matchTeams">Geen activiteiten 
 return
 }
 box.innerHTML=actief.map((m,i)=>(i===0?'<div class="nextMatchLabel">Eerstvolgende</div>':'')+trCardShell(m)).join('');
-actief.forEach(m=>trLoadCard(m))
+actief.forEach(m=>{trLoadCard(m);if(trDutyUI)trDutyUI.loadBadge(m.id)})
 }
 function trOpenMatch(id){
 trActiveMatch=trMatches.find(m=>m.id===id);
@@ -716,7 +731,7 @@ await fetch('/api/coach',{method:'POST',headers:{'content-type':'application/jso
 }
 function trCoachCardShell(m){
 if(m.type==='info'){return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><span class="infoTag">Informatiemoment</span><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+m.meta+'</div></div></div><button class="organizeBtn" onclick="trOpenCoachMatch(\''+m.id+'\')">Bekijk overzicht</button></div>'}
-return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+trCardMeta(m)+'</div></div></div><div class="dashBlock">'+trTimingDisplay(trTimingHtml(m))+'</div><div id="coachdash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" onclick="trOpenCoachMatch(\''+m.id+'\')">Coachstatus beheren</button></div>'
+return '<div class="matchCard"><div class="matchTop"><div class="matchInfo"><div class="matchDate">'+m.date+'</div><div class="matchTeams">'+m.teams+'</div><div class="matchMeta">'+trCardMeta(m)+'</div></div></div><div class="dashBlock">'+trTimingDisplay(trTimingHtml(m))+'</div><div id="coachdash-'+m.id+'" class="dashBlock"><div class="dashSub">Status laden...</div></div><button class="organizeBtn" onclick="trOpenCoachMatch(\''+m.id+'\')">Coachstatus beheren</button>'+trDutyButton(m)+'</div>'
 }
 function trCoachPickerLine(coach){
 if(coach&&coach.present==='Ja'){return '<div class="dashLine">🟢 Coach aanwezig · Thijs</div>'}
@@ -736,7 +751,7 @@ if(el)el.innerHTML='<div class="dashSub">Kon status niet laden.</div>'
 function trRenderCoachPicker(){
 let box=document.getElementById('coachMatchList');
 box.innerHTML=trMatches.map(m=>trCoachCardShell(m)).join('');
-trMatches.forEach(m=>{if(m.type!=='info'){trLoadCoachPickerCard(m)}})
+trMatches.forEach(m=>{if(m.type!=='info'){trLoadCoachPickerCard(m);if(trDutyUI)trDutyUI.loadBadge(m.id)}})
 }
 function trOpenCoachMatch(id){
 trActiveMatch=trMatches.find(m=>m.id===id);
