@@ -2,7 +2,7 @@ import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { validateFields, mergeMatches, displayMatch, safeDisplayMatch, editableFields } from '../lib/matches.mjs';
+import { validateFields, compareMatches, mergeMatches, displayMatch, safeDisplayMatch, editableFields } from '../lib/matches.mjs';
 import admin from '../netlify/functions/admin-matches.mts';
 import publicMatches from '../netlify/functions/matches.mts';
 const seed = JSON.parse(fs.readFileSync(new URL('../matches-seed.json',import.meta.url)));
@@ -108,4 +108,18 @@ test('timing shows gathering without start time/travel and preserves existing tr
   context.m={...m,time:undefined};assert.match(vm.runInContext('trMatchContextHtml(m)',context),/Tijd volgt/);assert.match(vm.runInContext('trMatchContextHtml(m)',context),/09:55/);
   context.m=seed.find(m=>m.id==='m9');assert.match(vm.runInContext('trTimingHtml(m)',context),/Verzameltijd volgt/);assert.match(vm.runInContext('trMatchContextHtml(m)',context),/Verzameltijd volgt/);assert.match(vm.runInContext('trCoachCardShell(m)',context),/Verzameltijd volgt/);
   context.m=seed.find(m=>m.id==='m2');assert.match(vm.runInContext('trTimingHtml(m)',context),/Reistijd/);
+});
+
+test('same-day matches use start time after stored edits and in seed fallback, preserving records', async () => {
+  const before = structuredClone(seed);
+  const january = mergeMatches(seed, []).filter(m => m.isoDate === '2027-01-23');
+  assert.deepEqual(january.map(m => m.time), ['12:00', '13:40']);
+  assert.match(january[0].opponent, /De Kraaien/);
+  assert.deepEqual(seed.map(displayMatch).sort(compareMatches).filter(m => m.isoDate === '2027-01-23').map(m => m.id), january.map(m => m.id));
+  rows = [{id: january[0].id, revision: 1, data: {...editableFields(january[0]), time: '14:00'}}];
+  const list = await (await publicMatches(new Request('https://teamrit.test/api/matches'))).json();
+  assert.deepEqual(list.filter(m => m.isoDate === '2027-01-23').map(m => m.time), ['13:40', '14:00']);
+  assert.deepEqual(seed, before);
+  const day = [{id: 'm3', isoDate: '2027-01-23'}, {id: 'm2', isoDate: '2027-01-23', time: ''}, {id: 'm1', isoDate: '2027-01-23', time: '09:00'}];
+  assert.deepEqual(day.sort(compareMatches).map(m => m.id), ['m1', 'm2', 'm3']);
 });

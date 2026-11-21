@@ -396,9 +396,9 @@ data=await res.json();
 notice.textContent='Het actuele programma kon niet worden geladen. Je ziet het oorspronkelijke programma; latere wijzigingen kunnen ontbreken. Vernieuw de pagina om opnieuw te proberen.';
 notice.hidden=false;
 }
-const [{safeDisplayMatch},{transportHtml}]=await Promise.all([import('/lib/matches.mjs'),import('/lib/transport.mjs')]);
+const [{safeDisplayMatch,compareMatches},{transportHtml}]=await Promise.all([import('/lib/matches.mjs'),import('/lib/transport.mjs')]);
 trTransportRenderer=transportHtml;
-trMatches.splice(0,trMatches.length,...data.map(safeDisplayMatch).sort((a,b)=>a.isoDate.localeCompare(b.isoDate)));
+trMatches.splice(0,trMatches.length,...data.map(safeDisplayMatch).sort(compareMatches));
 trRenderMatches();
 }
 
