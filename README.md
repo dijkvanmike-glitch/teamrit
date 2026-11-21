@@ -66,3 +66,24 @@ Na de beheerlogin toont de sectie **Binnen 48 uur** alleen wedstrijden met opens
 De controle vernieuwt elke minuut zolang de beheerpagina zichtbaar is, bij terugkeer naar de pagina, na opslaan en via **Waarschuwingen vernieuwen**. Dit is een controle in de geopende beheerpagina, geen achtergrondmelding. Tijden worden geïnterpreteerd in Europe/Amsterdam. Bij onbekende wedstrijdtijd telt een wedstrijddag mee zodra die het komende 48-uursvenster raakt. Een fout bij het ophalen wordt expliciet getoond; onbekende status wordt niet als geregeld beschouwd.
 
 **Maak WhatsApp-reminder** bereidt een bewerkbaar bericht met wedstrijdgegevens, openstaande punten en de publieke TeamRit-link voor. Pas na klikken op **Open WhatsApp met dit bericht** opent WhatsApp; de beheerder kiest zelf ontvangers en verstuurt zelf. Er wordt niets automatisch verzonden en geen coach ingeschakeld.
+
+### Zaaldienst en scheidsrechters (23 januari en 6 februari 2027)
+
+Beide zaalblokken hebben twee plekken voor zaaldienst en twee voor scheidsrechters,
+voor het hele blok. De knop op de wedstrijdkaart en in de coachkeuzelijst opent
+het overzicht. Ouders kiezen hun eigen naam, schrijven zich in en kunnen hun eigen
+inschrijving weer vrijgeven; dit staat los van aanwezigheid en fruit.
+
+Voer vóór publicatie `supabase/migrations/20261121184146_hall_duty_slots.sql` uit
+op de bestaande TeamRit-database. Dit voegt alleen acht lege plekken en de beperkte
+RPC `set_hall_duty` toe. Bestaande tabellen worden niet gewijzigd. RLS laat lezen toe;
+rechtstreeks invoegen, wijzigen en verwijderen is voor publieke clients geblokkeerd.
+Alleen de RPC kan een vrije plek claimen of een plek met dezelfde oudernaam vrijgeven.
+Een versienummer voorkomt overschrijven bij gelijktijdige acties, een unieke sleutel
+voorkomt twee plekken voor dezelfde persoon binnen dezelfde taak en hetzelfde blok.
+Net als bestaande ouderreacties gebruikt dit de oudernaam uit de lijst, zonder login;
+het bewijst dus niet wie werkelijk achter het scherm zit. De RPC gebruikt uitsluitend
+de vaste plekentabel en controleert de naam in `parents`.
+
+`node --test tests/*.test.mjs` test ook validatie, conflicten, afmelden en foutmeldingen.
+`node tests/serve.mjs` bevat uitsluitend fictieve dienstinschrijvingen in geheugen.
