@@ -111,15 +111,35 @@ test('timing shows gathering without start time/travel and preserves existing tr
 });
 
 test('same-day matches use start time after stored edits and in seed fallback, preserving records', async () => {
-  const before = structuredClone(seed);
-  const january = mergeMatches(seed, []).filter(m => m.isoDate === '2027-01-23');
+  const fixtures = [{...sample, id:'m90', isoDate:'2027-01-23', time:'13:40'}, {...sample, id:'m91', isoDate:'2027-01-23', opponent:'De Kraaien', time:'12:00'}];
+  const before = structuredClone(fixtures);
+  const january = mergeMatches(fixtures, []);
   assert.deepEqual(january.map(m => m.time), ['12:00', '13:40']);
   assert.match(january[0].opponent, /De Kraaien/);
-  assert.deepEqual(seed.map(displayMatch).sort(compareMatches).filter(m => m.isoDate === '2027-01-23').map(m => m.id), january.map(m => m.id));
+  assert.deepEqual(fixtures.map(displayMatch).sort(compareMatches).map(m => m.id), january.map(m => m.id));
   rows = [{id: january[0].id, revision: 1, data: {...editableFields(january[0]), time: '14:00'}}];
-  const list = await (await publicMatches(new Request('https://teamrit.test/api/matches'))).json();
-  assert.deepEqual(list.filter(m => m.isoDate === '2027-01-23').map(m => m.time), ['13:40', '14:00']);
-  assert.deepEqual(seed, before);
+  const list = mergeMatches(fixtures, rows);
+  assert.deepEqual(list.map(m => m.time), ['13:40', '14:00']);
+  assert.deepEqual(fixtures, before);
   const day = [{id: 'm3', isoDate: '2027-01-23'}, {id: 'm2', isoDate: '2027-01-23', time: ''}, {id: 'm1', isoDate: '2027-01-23', time: '09:00'}];
   assert.deepEqual(day.sort(compareMatches).map(m => m.id), ['m1', 'm2', 'm3']);
+});
+
+test('23 January is one editable home block with both games and manual gathering', async () => {
+  const res = await publicMatches(new Request('https://teamrit.test/api/matches'));
+  const january = (await res.json()).filter(m => m.isoDate === '2027-01-23');
+  assert.equal(january.length, 1);
+  const m = january[0];
+  assert.equal(m.id, 'match-db7c6d63-8bec-42b2-a1a6-01805adf1715');
+  assert.equal(m.home, true);
+  assert.equal(m.time, '12:00');
+  assert.equal(m.gathering, '10:45');
+  assert.equal(m.gatheringMode, 'manual');
+  assert.equal(m.location, 'Kers, Moerbalk 1, 1628 GW Hoorn');
+  assert.match(m.note, /12:00 WFHC – Z.H.C. De Kraaien JO14-1/);
+  assert.match(m.note, /13:40 WFHC – Alkmaarsche M.H.C. Alkmaar JO14-2/);
+  assert.match(m.note, /Veld 1, Vinyl/);
+  assert.match(m.note, /Zaalleiding: Hoorn \(WFHC\)/);
+  assert.match(m.note, /Eén aanmelding voor beide wedstrijden/);
+  assert.equal(editableFields(m).gathering, '10:45');
 });
