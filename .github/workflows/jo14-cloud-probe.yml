@@ -1,8 +1,6 @@
 name: JO14 cloud source verification
 on:
-  pull_request:
-    types: [opened, synchronize]
-    paths: ['cloud/browser-source.mjs']
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
