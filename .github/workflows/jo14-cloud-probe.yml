@@ -1,0 +1,19 @@
+name: JO14 cloud source verification
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts --no-audit --no-fund
+        working-directory: cloud
+      - run: npx playwright install --with-deps chromium
+        working-directory: cloud
+      - run: node cloud/browser-source.mjs
