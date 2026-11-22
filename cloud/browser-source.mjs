@@ -6,8 +6,10 @@ export async function readSource(){
  try{
   const context=await browser.newContext({locale:'nl-NL',timezoneId:'Europe/Amsterdam'});
   const page=await context.newPage();
-  const responsePromise=page.waitForResponse(r=>r.url().startsWith('https://app.hockeyweerelt.nl/')&&/\/poules\/184935\/teams\/11481(?:\?|$)/.test(r.url()),{timeout:90000});
-  await page.goto('https://www.knhb.nl/match-center#/team/11481|184935',{waitUntil:'domcontentloaded',timeout:60000});
+  const observed=[];
+  page.on('response',r=>{if(r.url().startsWith('https://app.hockeyweerelt.nl/')&&/\/poules\/184935\/teams\/11481(?:\?|$)/.test(r.url()))observed.push({method:r.request().method(),status:r.status(),headerNames:Object.keys(r.request().headers())})});
+  const responsePromise=page.waitForResponse(r=>r.ok()&&r.request().method()==='GET'&&r.url().startsWith('https://app.hockeyweerelt.nl/')&&/\/poules\/184935\/teams\/11481(?:\?|$)/.test(r.url()),{timeout:60000}).catch(()=>{throw Error('Geen geslaagde JSON-response. Alleen status/headerNAMEN: '+JSON.stringify(observed))});
+  await page.goto('https://www.knhb.nl/match-center#/team/11481|184935',{waitUntil:'domcontentloaded',timeout:45000});
   const response=await responsePromise;
   if(!response.ok())throw Error('HockeyWeerelt geeft HTTP '+response.status());
   const body=await response.json();
