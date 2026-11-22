@@ -1,13 +1,13 @@
 name: JO14 cloud source verification
 on:
   pull_request:
-    types: [opened]
+    types: [opened, synchronize]
     paths: ['cloud/browser-source.mjs']
 permissions:
   contents: read
 jobs:
   source:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 6
     steps:
       - uses: actions/checkout@v4
